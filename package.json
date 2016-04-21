@@ -1,6 +1,6 @@
 {
   "name": "KB",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "A Dom Binding Library",
   "keywords": [
     "DOM",
@@ -17,9 +17,9 @@
     }
   ],
   "main": "index",
-  "license":{
-      "type": "MIT",
-      "url": "http://en.wikipedia.org/wiki/MIT_License"
+  "license": {
+    "type": "MIT",
+    "url": "http://en.wikipedia.org/wiki/MIT_License"
   },
   "repository": {
     "type": "git",
