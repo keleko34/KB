@@ -10,7 +10,6 @@ define([],function(){
         {
           var changeEvent = function(el,attr,value,oldValue){
             this.stopPropagation = function(){this._stopPropogation = true;};
-            this._stopPropogation = false;
             this.preventDefault = function(){this._preventDefault = true;};
             this.value = value;
             this.oldValue = oldValue;
