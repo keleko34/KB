@@ -1,0 +1,50 @@
+{
+  "name": "KB",
+  "version": "0.0.2",
+  "description": "A Dom Binding Library",
+  "keywords": [
+    "DOM",
+    "Binding",
+    "Dom Binding"
+  ],
+  "author": {
+    "name": "Keleko34",
+    "email": "gregory.guidero@gmail.com"
+  },
+  "contributors": [
+    {
+      "name": "Gregory Guidero"
+    }
+  ],
+  "main": "index",
+  "license":{
+      "type": "MIT",
+      "url": "http://en.wikipedia.org/wiki/MIT_License"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/keleko34/KB.git"
+  },
+  "bugs": {
+    "url": "https://github.com/keleko34/KB/issues"
+  },
+  "devDependencies": {
+    "gulp": "^3.9.0",
+    "gulp-closure-compiler": "^0.4.0",
+    "gulp-file": "^0.2.0",
+    "gulp-inject": "^3.0.0",
+    "gulp-prompt": "^0.1.2",
+    "gulp-replace": "^0.5.4",
+    "sort-stream": "^1.0.1"
+  },
+  "scripts": {
+    "build": "gulp build"
+  },
+  "maintainers": [
+    {
+      "name": "keleko34",
+      "email": "gregory.guidero@gmail.com"
+    }
+  ],
+  "directories": {}
+}
