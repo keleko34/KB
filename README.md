@@ -25,6 +25,7 @@ This library allows for adding attribute/property change listeners
 - oldValue (Any) The current value that is set prior to change
 - attr (String) the name of the attribute that changed
 - target (DOM Node) the node that had the change happen
+- arguments (Argument Array) if attr is a function this the arguments that was passed to the function
 
 ###### Methods
 

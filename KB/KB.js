@@ -8,17 +8,18 @@ define([],function(){
 
         function Bind()
         {
-          var changeEvent = function(el,attr,value,oldValue){
+          var changeEvent = function(el,attr,value,oldValue,args){
             this.stopPropagation = function(){this._stopPropogation = true;};
             this.preventDefault = function(){this._preventDefault = true;};
             this.value = value;
             this.oldValue = oldValue;
             this.target = el;
             this.attr = attr;
+            this.arguments = args;
           }
 
-          var set = function(el,prop,val,ret){
-            var e = new changeEvent(el,prop,val,ret);
+          var set = function(el,prop,val,ret,args){
+            var e = new changeEvent(el,prop,val,ret,args);
             if(_attrListeners[prop] !== undefined)
             {
               for(var x=0;x<_attrListeners[prop].length;x+=1)
@@ -74,8 +75,10 @@ define([],function(){
                       _functions[key] = _descriptors[key].value;
                       _proto[key] = function()
                       {
-                          var action = _functions[key].apply(this,arguments);
-                          set(this,key,arguments,action);
+                          if(set(this,key,null,null,arguments))
+                          {
+                            _functions[key].apply(this,arguments);
+                          }
                           return action;
                       }
                   }
