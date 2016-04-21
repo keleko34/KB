@@ -12,7 +12,9 @@ This library allows for adding attribute/property change listeners
 ###### Start
 
 `var kb = CreateKB();` -- Creates new KB same as 'new Method();'
+
 `kb.addAttrListener('innerHTML',function(e){console.log(e);});` -- Works in the same way as addEventListener
+
 `kb.call();` -- Starts the listening, Constructor
 
 ###### Event Properties
