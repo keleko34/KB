@@ -123,5 +123,5 @@ define([],function(){
     {
       module.exports = CreateKB;
     }
-	return CreateKM;
+	return CreateKB;
 })

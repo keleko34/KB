@@ -126,5 +126,5 @@ var CreateKB = (function(){
     {
       module.exports = CreateKB;
     }
-	return CreateKM;
+	return CreateKB;
 }())
