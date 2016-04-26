@@ -4,22 +4,13 @@ define(['./__Bind'],function(CreateBind){
     var _node = {}
       , _Binds = []
       , _initialText = ""
-      , _hasChildren = false
-      , _children = []
       , _initialTextSplit = []
-      , _hasAttrBinds = false
+      , _isAttr = false
       , _startBind = "{{"
       , _endBind = "}}"
 
     function BindNode(node)
     {
-      var checkTextContent = function(textContent,children)
-      {
-        if(textContent.indexOf(_startBind) > -1 && textContent.indexOf(_endBind) > -1)
-        {
-
-        }
-      }
 
 
     }
@@ -59,24 +50,19 @@ define(['./__Bind'],function(CreateBind){
       return _initialText;
     }
 
-    BindNode.hasChildren = function()
-    {
-      return _hasChildren;
-    }
-
-    BindNode.children = function()
-    {
-      return _children;
-    }
-
     BindNode.initialTextSplit = function()
     {
       return _initialTextSplit;
     }
 
-    BindNode.hasAttributeBinds = function()
+    BindNode.isAttr = function(v)
     {
-      return _hasAttrBinds;
+      if(v === undefined)
+      {
+        return _isAttr;
+      }
+      _isAttr = !!v;
+      return BindNode;
     }
 
     BindNode.getBindById = function(id)
@@ -88,7 +74,7 @@ define(['./__Bind'],function(CreateBind){
       });
     }
 
-    BindNode.refreshBinds = function()
+    BindNode.updateCheck = function()
     {
       _Binds.forEach(function(k,i){
         k.call();

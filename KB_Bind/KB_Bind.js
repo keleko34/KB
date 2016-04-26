@@ -3,7 +3,7 @@ define(['./__Assets/KB.min','./__BindNode'],function(CreateKB,CreateBindNode){
   {
     var _textBinds = []
       , _attrBinds = []
-      , _filters = {}
+      , _pipedAttribute = {}
       , _startBind = "{{"
       , _endBind = "}}"
       , _onChangeEvents = {},
@@ -75,7 +75,8 @@ define(['./__Assets/KB.min','./__BindNode'],function(CreateKB,CreateBindNode){
       attrNodes.forEach(function(k,i){
         _attrBinds.push(CreateBindNode()
         .startBind(_startBind)
-        .endBind(_endBind));
+        .endBind(_endBind)
+        .isAttr(true));
         _attrBinds[_attrBinds.length-1].call();
       });
 
@@ -95,29 +96,29 @@ define(['./__Assets/KB.min','./__BindNode'],function(CreateKB,CreateBindNode){
       return _textBinds;
     }
 
-    KB_Bind.attrbuteBinds = function()
+    KB_Bind.attributeBinds = function()
     {
       return _attrBinds;
     }
 
-    KB_Bind.filters = function()
+    KB_Bind.pipedAttributes = function()
     {
-      return _filters;
+      return _pipedAttribute;
     }
 
-    KB_Bind.addFilter = function(n,f)
+    KB_Bind.addPipedAttribute = function(n,f)
     {
       if(typeof n === 'string' && typeof f === 'function')
       {
-        _filters[n] = f;
+        _pipedAttribute[n] = f;
       }
     }
 
-    KB_Bind.removeFilter = function(n)
+    KB_Bind.removePipedAttribute = function(n)
     {
-      if(_filters[n] !== undefined)
+      if(_pipedAttribute[n] !== undefined)
       {
-        _filters[n] = undefined;
+        _pipedAttribute[n] = undefined;
       }
     }
 
@@ -194,6 +195,15 @@ define(['./__Assets/KB.min','./__BindNode'],function(CreateKB,CreateBindNode){
     }
 
     return KB_Bind;
+  }
+  if (typeof define === "function" && define.amd)
+  {
+    define('KB_Bind',CreateKB_Bind); //global KM define in browser
+    define([],CreateKB_Bind); //define if file refrenced
+  }
+  else if (typeof module === "object" && module.exports)
+  {
+    module.exports = CreateKB_Bind;
   }
   return CreateKB_Bind;
 });
