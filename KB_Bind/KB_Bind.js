@@ -1,12 +1,15 @@
-define(['./__Assets/KB.min','./__BindNode'],function(CreateKB,CreateBindNode){
+define(['./__Assets/KB','./__BindNode'],function(CreateKB,CreateBindNode){
   function CreateKB_Bind()
   {
+    /* BUILD SECTION */
+      /* END BUILD SECTION */
+
     var _textBinds = []
       , _attrBinds = []
       , _pipedAttribute = {}
       , _startBind = "{{"
       , _endBind = "}}"
-      , _onChangeEvents = {},
+      , _onChangeEvents = {}
       , _KBListener = CreateKB()
       , _textListeners = ['innerHTML','textContent','innerText','outerHTML','outerText','appendChild','removeChild']
       , _onUpdate = function(e)

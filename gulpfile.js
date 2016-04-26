@@ -35,8 +35,8 @@ gulp.task('build', function(){
             {
               console.log('\033[36mInjecting File:\033[37m',filepath);
               var contents = file.contents.toString('utf8'),
-                  re = /(function Create)(.*)(\()/,
-                  module = 'Create'+re.exec(contents)[2];
+                  re = /(function Create)(.*)(\()/;
+              var module = 'Create'+re.exec(contents)[2];
 
               contents = contents.replace(reE,"}());");
               contents = contents.replace(reD,"var "+module+" = (function(){");
