@@ -4,7 +4,8 @@ define([],function(){
       /* BUILD SECTION */
       /* END BUILD SECTION */
 
-        var _attrListeners = {};
+        var _attrListeners = {}
+          , _attrUpdateListeners = {};
 
         function Bind()
         {
@@ -37,13 +38,34 @@ define([],function(){
             }
             return true;
           }
-          Bind.inject(Node,set);
-          Bind.inject(Element,set);
-          Bind.inject(HTMLElement,set);
-          Bind.inject(Document,set);
+
+          var update = function(el,prop,val,ret,args){
+            var e = new changeEvent(el,prop,val,ret,args);
+            if(_attrUpdateListeners[prop] !== undefined)
+            {
+              for(var x=0;x<_attrUpdateListeners[prop].length;x+=1)
+              {
+                _attrUpdateListeners[prop][x].call(el,e);
+                if(e._stopPropogation)
+                {
+                  return true;
+                }
+                if(e._preventDefault)
+                {
+                  return false;
+                }
+              }
+            }
+            return true;
+          }
+
+          Bind.inject(Node,set,update);
+          Bind.inject(Element,set,update);
+          Bind.inject(HTMLElement,set,update);
+          Bind.inject(Document,set,update);
         }
 
-        Bind.inject = function(obj,set){
+        Bind.inject = function(obj,set,update){
           var _proto = obj.prototype,
               _keys = Object.keys(_proto),
               x,
@@ -65,6 +87,10 @@ define([],function(){
                               {
                                 _descriptors[key].set.apply(this,arguments);
                               }
+                              if(typeof update === 'function')
+                              {
+                                update(this,key,v,oldValue);
+                              }
                           },
                           enumerable:true,
                           configurable:true
@@ -75,9 +101,14 @@ define([],function(){
                       _functions[key] = _descriptors[key].value;
                       _proto[key] = function()
                       {
+                          var action = null;
                           if(set(this,key,null,null,arguments))
                           {
-                            _functions[key].apply(this,arguments);
+                            action = _functions[key].apply(this,arguments);
+                          }
+                          if(typeof update === 'function')
+                          {
+                            update(this,key,null,null,arguments,action);
                           }
                           return action;
                       }
@@ -100,6 +131,19 @@ define([],function(){
           return Bind;
         }
 
+        Bind.addAttrUpdateListener = function(attr,func)
+        {
+          if(_attrUpdateListeners[attr] === undefined)
+          {
+            _attrUpdateListeners[attr] = [];
+          }
+          if(typeof func === 'function')
+          {
+            _attrUpdateListeners[attr].push(func);
+          }
+          return Bind;
+        }
+
         Bind.removeAttrListener = function(attr,func)
         {
           if(_attrListeners[attr] !== undefined && typeof func === 'function')
@@ -109,6 +153,20 @@ define([],function(){
               if(_attrListeners[attr][x].toString() === func.toString())
               {
                 _attrListeners[attr].splice(x,1);
+              }
+            }
+          }
+        }
+
+        Bind.removeAttrUpdateListener = function(attr,func)
+        {
+          if(_attrUpdateListeners[attr] !== undefined && typeof func === 'function')
+          {
+            for(var x=0;x<_attrUpdateListeners[attr].length;x+=1)
+            {
+              if(_attrUpdateListeners[attr][x].toString() === func.toString())
+              {
+                _attrUpdateListeners[attr].splice(x,1);
               }
             }
           }
