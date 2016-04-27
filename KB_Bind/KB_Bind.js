@@ -145,6 +145,9 @@ define(['./__Assets/KB','./__BindNode'],function(CreateKB,CreateBindNode){
         if(k.nodeName === 'BODY') lookingInBody = true;
         return (lookingInBody ? Array.prototype.concat.apply([],Array.prototype.slice.call(k.attributes).filter(function(d,x){
           return (d.value.indexOf(searchText) > -1);
+        }).map(function(d,x){
+          d.parentElement = k;
+          return d;
         })) : null);
       })).filter(function(k,i){
         return (k !== null);

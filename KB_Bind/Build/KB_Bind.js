@@ -15,94 +15,72 @@ var CreateKB_Bind = (function(){
   return CreateBind;
 }());;
 
-      var CreateBindNode = (function(){
-  function CreateBindNode()
+      var CreateDiff = (function(){
+  function CreateDiff()
   {
-    var _node = {}
-      , _Binds = []
-      , _initialText = ""
-      , _initialTextSplit = []
-      , _isAttr = false
-      , _startBind = "{{"
-      , _endBind = "}}"
-
-    function BindNode(node)
+    function Diff(o,n)
     {
+      o = o.replace(/\s+$/,'');
+      n = n.replace(/\s+$/,'');
 
+      o = (typeof o === 'string' ? (o == "" ? [] : o.split(/\s+/)) : o);
+      n = (typeof n === 'string' ? (n == "" ? [] : n.split(/\s+/)) : n);
 
+      return Diff.diffString(o,n);
     }
 
-    BindNode.startBind = function(v)
+    Diff.convertWordArrToObj = function(arr,otherStr)
     {
-      if(v === undefined)
-      {
-        return _startBind;
+      return arr.reduce(function(o,v,i){
+       o[v] = (o[v] === undefined ? Object.defineProperty({rows:[i]},otherStr,{value:null,writable:true}) : (o[v].rows.push(i) ? o[v] : Object.defineProperty({rows:[i]},otherStr,{value:null,writable:true})));
+       return o;
+      },{});
+    }
+
+    Diff.diffString = function(o,n)
+    {
+      var ns = Diff.convertWordArrToObj(n,'o'),
+          os = Diff.convertWordArrToObj(o,'n'),
+          i = 0;
+
+      Object.keys(ns).forEach(function(k){
+        if ( ns[k].rows.length == 1 && typeof(os[k]) != "undefined" && os[k].rows.length == 1 ) {
+          n[ ns[k].rows[0] ] = { text: n[ ns[k].rows[0] ], row: os[k].rows[0] };
+          o[ os[k].rows[0] ] = { text: o[ os[k].rows[0] ], row: ns[k].rows[0] };
+        }
+      });
+
+
+      for (i=0;i< n.length-1;i+=1) {
+        if ( n[i].text != null && n[i+1].text == null && n[i].row + 1 < o.length && o[ n[i].row + 1 ].text == null &&
+             n[i+1] == o[ n[i].row + 1 ] ) {
+          n[i+1] = { text: n[i+1], row: n[i].row + 1 };
+          o[n[i].row+1] = { text: o[n[i].row+1], row: i + 1 };
+        }
       }
-      _startBind = (typeof v === 'string' ? v : _startBind);
-      return BindNode;
-    }
 
-    BindNode.endBind = function(v)
-    {
-      if(v === undefined)
-      {
-        return _endBind;
+      for (i=n.length-1;i>0;i-=1) {
+        if ( n[i].text != null && n[i-1].text == null && n[i].row > 0 && o[ n[i].row - 1 ].text == null &&
+             n[i-1] == o[ n[i].row - 1 ] ) {
+          n[i-1] = { text: n[i-1], row: n[i].row - 1 };
+          o[n[i].row-1] = { text: o[n[i].row-1], row: i - 1 };
+        }
       }
-      _endBind = (typeof v === 'string' ? v : _endBind);
-      return BindNode;
-    }
-
-    BindNode.node = function()
-    {
-      return _node;
-    }
-
-    BindNode.Binds = function()
-    {
-      return _Binds;
-    }
-
-    BindNode.initialText = function()
-    {
-      return _initialText;
-    }
-
-    BindNode.initialTextSplit = function()
-    {
-      return _initialTextSplit;
-    }
-
-    BindNode.isAttr = function(v)
-    {
-      if(v === undefined)
-      {
-        return _isAttr;
-      }
-      _isAttr = !!v;
-      return BindNode;
-    }
-
-    BindNode.getBindById = function(id)
-    {
-      return _Binds.map(function(k,i){
-        return (k.bindName() !== id ? null : k);
+      return Array.prototype.concat.apply([],[o,n]).map(function(k,i){
+            return (i < (o.length) ? {pos:i,change:(typeof k === 'string' && (n[i] !== k) ? 'delete' : 'none'),value:(typeof k === 'string' ? k : k.text),rowObj:(typeof k === 'object' ? k : null)} :
+                   {pos:(i-(o.length)),change:(typeof k === 'string' && (o[i-(o.length)] !== k) ? 'add' : 'none'),value:(typeof k === 'string' ? k : k.text),rowObj:(typeof k === 'object' ? k : null)});
       }).filter(function(k,i){
-        return (k !== null);
+        return ((i > (o.length-1) && k.rowObj !== null) ?
+                (typeof n[(i-(o.length))] === 'object' ? (o[n[(i-(o.length))].row].text !== n[(i-(o.length))].text) : true) :
+                (i > (o.length-1)) ? (n[(i-(o.length))] !== o[(i-(o.length))]) : true);
+      }).sort(function(a,b){
+        return (a.pos > b.pos ? 1 : -1);
       });
     }
-
-    BindNode.updateCheck = function()
-    {
-      _Binds.forEach(function(k,i){
-        k.call();
-      });
-    }
-
-    return BindNode;
+    return Diff;
   }
-  return CreateBindNode;
-}());;
-
+  return CreateDiff;
+}());
       var CreateKB = (function(){
 	function CreateKB(){
 
@@ -288,6 +266,149 @@ var CreateKB_Bind = (function(){
 	return CreateKB;
 }());
 
+      var CreateBindNode = (function(){
+  function CreateBindNode()
+  {
+    var _node = {}
+      , _Binds = []
+      , _initialText = ""
+      , _textMap = []
+      , _updatedText = ""
+      , _isAttr = false
+      , _startBind = "{{"
+      , _endBind = "}}"
+      , _diff = CreateDiff()
+
+    function BindNode(node)
+    {
+      _node = node;
+      _initialText = node.textContent;
+      if(_isAttr)
+      {
+        _initialText = node.value;
+      }
+      _textMap = BindNode.splitBind(_initialText);
+
+      _textMap.forEach(function(k,i){
+        if(k.indexOf(_startBind) > -1 && k.indexOf(_endBind) > -1)
+        {
+          _Binds.push(CreateBind().bindName(k.split('|')[0].replace(_startBind,'').replace(/\s/g,''))
+          .bindStartPosition((_isAttr ? _node.value : _node.textContent).indexOf(k))
+          .bindText(k)
+          .attributes(k.split('|')[1].replace(_endBind).split(';').filter(function(d,x){
+            return (d.length > 0);
+          }).map(function(d,x){
+            var ret = {};
+            ret[d.split('=')[0]] = d.split('=')[1];
+            return ret;
+          })));
+          if(_isAttr)
+          {
+            _node.value = _Binds[_Binds.length-1](_node.value);
+          }
+          else
+          {
+            _node.textContent = _Binds[_Binds.length-1](_node.textContent);
+          }
+        }
+      });
+      _updatedText = (_isAttr ? _node.value : _node.textContent);
+      _textMap.map(function(k,i){
+        return (k.indexOf(_startBind) > -1 && k.indexOf(_endBind) ? {bind:BindNode.getBindById(k.split('|')[0].replace(_startBind,'').replace(/\s/g,'')),name:k.split('|')[0].replace(_startBind,'').replace(/\s/g,'')} : k);
+      });
+    }
+
+    BindNode.startBind = function(v)
+    {
+      if(v === undefined)
+      {
+        return _startBind;
+      }
+      _startBind = (typeof v === 'string' ? v : _startBind);
+      return BindNode;
+    }
+
+    BindNode.endBind = function(v)
+    {
+      if(v === undefined)
+      {
+        return _endBind;
+      }
+      _endBind = (typeof v === 'string' ? v : _endBind);
+      return BindNode;
+    }
+
+    BindNode.node = function()
+    {
+      return _node;
+    }
+
+    BindNode.Binds = function()
+    {
+      return _Binds;
+    }
+
+    BindNode.initialText = function()
+    {
+      return _initialText;
+    }
+
+    BindNode.initialTextSplit = function()
+    {
+      return _initialTextSplit;
+    }
+
+    BindNode.isAttr = function(v)
+    {
+      if(v === undefined)
+      {
+        return _isAttr;
+      }
+      _isAttr = !!v;
+      return BindNode;
+    }
+
+    BindNode.splitBind = function(t)
+    {
+      return Array.prototype.concat.apply([],t.split(_startBind).map(function(k,i){
+        return (k.indexOf(_endBind) > -1 ? (_startBind+k).split(_endBind).map(function(d,x){
+          return (d.indexOf(_startBind) > -1 ? d+_endBind : d);
+        }) : k);
+      })).filter(function(k,i){
+        return (k.length > 0);
+      });
+    }
+
+    BindNode.getBindById = function(id)
+    {
+      return _Binds.map(function(k,i){
+        return (k.bindName() !== id ? null : k);
+      }).filter(function(k,i){
+        return (k !== null);
+      });
+    }
+
+    BindNode.compareCheck = function()
+    {
+      var diff = _diff(_textMap,(_isAttr ? _node.value : _node.textContent));
+    }
+
+    BindNode.updateCheck = function()
+    {
+      var curText = _initialText;
+      _Binds.forEach(function(k,i){
+        curText = k(curText,(_isAttr ? _node.value : _node.textContent));
+      });
+    }
+
+
+
+    return BindNode;
+  }
+  return CreateBindNode;
+}());;
+
+
 
 
       /* END BUILD SECTION */
@@ -433,6 +554,9 @@ var CreateKB_Bind = (function(){
         if(k.nodeName === 'BODY') lookingInBody = true;
         return (lookingInBody ? Array.prototype.concat.apply([],Array.prototype.slice.call(k.attributes).filter(function(d,x){
           return (d.value.indexOf(searchText) > -1);
+        }).map(function(d,x){
+          d.parentElement = k;
+          return d;
         })) : null);
       })).filter(function(k,i){
         return (k !== null);
