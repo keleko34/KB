@@ -121,6 +121,11 @@ define(['./__Bind','./__Diff'],function(CreateBind,CreateDiff){
       });
     }
 
+
+    //rules for checking, if value still exists we move binds position,if bind has been deleted, we check if one has been added to the same pos, if the same pos was a move
+    //we can attach to the value of the opposite of the move eg bind at pos 3 move from 4 to 3, we check pos 2 if it was an add, if so this is the new bind else if deleted
+    //bind was unsynced, can be synced again by adding bind
+
     BindNode.compareCheck = function()
     {
       var diff = _diff(_textMap,(_isAttr ? _node.value : _node.textContent));
