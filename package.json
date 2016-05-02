@@ -1,11 +1,14 @@
 {
   "name": "KB",
-  "version": "0.0.5",
-  "description": "A Dom Binding Library",
+  "version": "0.1.1",
+  "description": "A Dom Attributes Binding and Event Listener Library",
   "keywords": [
     "DOM",
     "Binding",
-    "Dom Binding"
+    "Dom Binding",
+    "Attributes",
+    "Attribute Events",
+    "Attribute Event Listeners"
   ],
   "author": {
     "name": "Keleko34",

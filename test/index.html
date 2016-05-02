@@ -4,13 +4,6 @@
     <title>Testing</title>
   </head>
   <body>
-    <script type="text/javascript">
-      HTMLInputElement._constructor = HTMLInputElement.constructor;
-    HTMLInputElement.constructor = function(){
-      console.log('constructing input',arguments);
-      HTMLInputElement._constructor.apply(this,arguments);
-    }
-    </script>
     <input id="testInput" type="text" />
     <div id="testDisplay"></div>
     <script type="text/javascript" src="KB/Build/KB.js"></script>
@@ -25,6 +18,12 @@
           return;
         }
         testDisplay.innerHTML = e.value;
+      })
+      .addAttrListener('appendChild',function(e){
+        console.log(e);
+      })
+      .addAttrListener('innerHTML',function(e){
+        console.log(e); //fires when input value changes
       });
       kb();
       var testInput = document.getElementById('testInput').value;

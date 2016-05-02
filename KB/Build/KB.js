@@ -108,7 +108,6 @@ var CreateKB = (function(){
               _onKeyDown = function(e){
                 var oldValue = this.value;
                 setTimeout((function(){
-                  console.log('yay',this.value);
                   if(!set(this,'value',this.value,oldValue))
                   {
                     _descriptors["value"].set.call(this,oldValue);
