@@ -56,6 +56,7 @@ define([],function(){
             return true;
           }
 
+          Bind.inject(HTMLInputElement,set,update);
           Bind.inject(Node,set,update);
           Bind.inject(Element,set,update);
           Bind.inject(HTMLElement,set,update);
@@ -67,7 +68,24 @@ define([],function(){
               _keys = Object.keys(_proto),
               x,
               _descriptors = {},
-              _functions = {};
+              _functions = {},
+              _onKeyDown = function(e){
+                var oldValue = this.value;
+                setTimeout((function(){
+                  console.log('yay',this.value);
+                  if(!set(this,'value',this.value,oldValue))
+                  {
+                    _descriptors["value"].set.call(this,oldValue);
+                  }
+                  else
+                  {
+                    if(typeof update === 'function')
+                    {
+                      update(this,"value",this.value,oldValue);
+                    }
+                  }
+                }).bind(this),0);
+              }
 
           for(x=0;x<_keys.length;x+=1)
           {
@@ -76,7 +94,17 @@ define([],function(){
                   if(_descriptors[key].set !== undefined)
                   {
                       Object.defineProperty(_proto,key,{
-                          get:_descriptors[key].get,
+                          get:function(){
+                            if(key !== "kb_onkeydown" && _descriptors["value"] !== undefined)
+                            {
+                              if(!this.kb_onkeydown)
+                              {
+                                this.kb_onkeydown = true;
+                                this.addEventListener('keydown',_onKeyDown);
+                              }
+                            }
+                            return _descriptors[key].get.apply(this);
+                          },
                           set:function(v)
                           {
                               var oldValue = _descriptors[key].get.apply(this);

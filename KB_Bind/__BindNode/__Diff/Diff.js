@@ -15,49 +15,86 @@ define([],function(){
         }
         return str;
       }
-
-      function concatArr(arr,pos,count)
-      {
-        for(var x=1;x<count;x+=1)
-        {
-          arr[pos] = arr[pos]+arr.splice((pos+x),1);
-        }
-        return arr;
-      }
+      var count = 0;
       //need to fix reduce
       o = (typeof o === 'string' ? (o == "" ? [] : o.split(/\s+/)) : o).reduce(function(w,v,i,a){
-        var arr = [];
-        if(w.constructor.toString() === Array.toString())
+        if(typeof v === 'string' && w[count] === undefined)
         {
-          arr = w;
+          w[count] = v;
         }
-        if(typeof v === 'string' && typeof a[i] )
-
-
-        if(typeof a[i] === 'string' && typeof a[i+1] === 'string')
+        else if(typeof v === 'string')
         {
-          a = concatArr(a,i,1);
+          w[count] = w[count]+" "+v;
         }
-        return a;
-      });
+        else if(typeof v === 'object' && w[count] === undefined)
+        {
+          w[count] = v;
+          count += 1;
+        }
+        else
+        {
+          count += 1;
+          w[count] = v;
+          count += 1;
+        }
+        return w;
+      },[]);
+
+      count = 0;
+      countN = 0;
+      var found = false;
+      var endOfFound = false;
+      var currValue = '';
+      var last = '';
+      var bindCount = 0;
       n = (typeof n === 'string' ? (n == "" ? [] : n.split(/\s+/)) : n).reduce(function(w,v,i,a){
-        var count = 0;
-        loop:for(var x=0;x<o.length;x+=1)
+        found = false;
+        endOfFound = false;
+        if(w[count] === undefined)
         {
-          if(typeof o[x] === 'string' && o[x].indexOf(concatString(a,i,count)) > -1)
+          w[count] = v;
+        }
+        else
+        {
+          w[count] = w[count]+" "+v;
+        }
+        for(var x=0;x<o.length;x+=1)
+        {
+          currValue = (typeof o[x] === 'string' ? o[x] : o[x].value());
+          bindCount = (typeof o[x] === 'string' ? 0 : o[x].value().split(/\s+/).length)
+          last = w[count].substring(0,w[count].lastIndexOf(" "));
+          if(currValue.indexOf(w[count]) > -1)
           {
-            count +=1;
+            found = true;
           }
-          else
+          else if(!found && w[count] !== v && currValue.indexOf(last) > -1 && currValue.length === last.length)
           {
-            break loop;
+            endOfFound = true;
+          }
+          else if(currValue.split(/\s+/).indexOf(v) > -1 && currValue.split(/\s+/)[currValue.split(/\s+/).indexOf(v)].length === v.length)
+          {
+            endOfFound = true;
+          }
+          else if(bindCount === 0 && count === x && (currValue.split(/\s+/).length+1) === w[count].split(/\s+/).length)
+          {
+            endOfFound = true;
+          }
+          else if(bindCount > 0 && count === x && w[count].split(/\s+/).length === bindCount+1)
+          {
+            endOfFound = true;
           }
         }
-        a = concatArr(a,i,count);
-        return a;
-      });
+        if(!found && endOfFound && w[count] !== v)
+        {
+          w[count] = w[count].substring(0,w[count].lastIndexOf(" "));
+          count += 1;
+          w[count] = v;
+        }
+        return w;
+      },[]);
+
       console.log(o,n);
-      //var diffString = Diff.diffString(o,n);
+     return Diff.diffWords(o,n);
 
     }
 

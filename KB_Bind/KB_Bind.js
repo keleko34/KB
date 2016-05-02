@@ -19,60 +19,28 @@ define(['./__Assets/KB','./__BindNode'],function(CreateKB,CreateBindNode){
           if(_textListeners.indexOf(e.attr) > -1)
           {
             _textBinds.forEach(function(k,i){
-              k.updateCheck();
+              k.compareCheck();
             });
           }
           else
           {
             _attrBinds.forEach(function(k,i){
-              k.updateCheck();
+              k.compareCheck();
             });
           }
         }
 
-    /* old not used
-    var binder = function(node,isAttr)
-    {
-      this.initialText = (isAttr ? node.value : node.textContent);
-      this.isAttr = isAttr;
-      this.bindPosition = this.initialText.indexOf(_startBind);
-      this.bindText = this.initialText.substring(this.initialText.indexOf(_startBind),this.initialText.indexOf(_endBind));
-
-      this.splitInitialText = this.initialText.split(_startBind).map(function(k,i){
-        return (k.indexOf(_endBind) > -1 ? k.substring((k.indexOf(_endBind)+_endBind.length),k.length) : k);
-        if(k.indexOf(_endBind) > -1)
-        {
-
-        }
-      });
-
-      this.hasChildren = (isAttr ? false : (node.children.length > 0));
-      this.children = (isAttr ? null : node.children);
-      this.bind = (this.bindText).split("|").map(function(k,i){
-        return (k.indexOf(_startBind) > 0 ? k.replace(_startBind,"") : "");
-      }).join("");
-
-      this.mode = (this.bindText).split('mode=').map(function(k,i){
-        return (k.indexOf('one-way') > -1 ? 'one-way' : (k.indexOf('two-way') > -1 ? 'two-way' : (i === 1 ? 'two-way' : '')));
-      }).join("");
-
-      this.filters = (this.bindText).split('filters=').map(function(k,i){
-        return (i === 1 ? (k.substring(0,(k.indexOf(';') > -1 ? k.indexOf(';') : k.indexOf(_endBind)))) : "");
-      }).join("").split(",");
-
-      this.value = "";
-    }*/
-
     function KB_Bind()
     {
       var textNodes = KB_Bind.SearchAllTextNodes(_startBind)
-        , attrNodes = KB_Bind.SearchAllAttributes(_endBind);
+        , attrNodes = KB_Bind.SearchAllAttributes(_endBind)
 
       textNodes.forEach(function(k,i){
         _textBinds.push(CreateBindNode()
         .startBind(_startBind)
-        .endBind(_endBind));
-        _textBinds[_textBinds.length-1].call();
+        .endBind(_endBind)
+        .pipedAttributes(_pipedAttribute));
+        _textBinds[_textBinds.length-1](k);
       });
 
       attrNodes.forEach(function(k,i){
@@ -80,7 +48,7 @@ define(['./__Assets/KB','./__BindNode'],function(CreateKB,CreateBindNode){
         .startBind(_startBind)
         .endBind(_endBind)
         .isAttr(true));
-        _attrBinds[_attrBinds.length-1].call();
+        _attrBinds[_attrBinds.length-1](k);
       });
 
       _textListeners.forEach(function(k,i){
@@ -91,6 +59,15 @@ define(['./__Assets/KB','./__BindNode'],function(CreateKB,CreateBindNode){
       KB_Bind.getAllAttributeTypes().forEach(function(k,i){
         _KBListener.removeAttrUpdateListener(k,_onUpdate);
         _KBListener.addAttrUpdateListener(k,_onUpdate);
+        k.pipedAttributes(_pipedAttribute);
+      });
+
+      _textBinds.forEach(function(k,i){
+         k.pipedAttributes(_pipedAttribute);
+      });
+
+      _attrBinds.forEach(function(k,i){
+         k.pipedAttributes(_pipedAttribute);
       });
     }
 

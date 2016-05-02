@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Testing</title>
+  </head>
+  <body>
+    <script type="text/javascript">
+      HTMLInputElement._constructor = HTMLInputElement.constructor;
+    HTMLInputElement.constructor = function(){
+      console.log('constructing input',arguments);
+      HTMLInputElement._constructor.apply(this,arguments);
+    }
+    </script>
+    <input id="testInput" type="text" />
+    <div id="testDisplay"></div>
+    <script type="text/javascript" src="KB/Build/KB.js"></script>
+    <script type="text/javascript">
+      var testDisplay = document.getElementById('testDisplay');
+      var kb = CreateKB();
+      kb.addAttrListener('value',function(e){
+        console.log(e);
+        if(e.value === 'cool')
+        {
+          e.preventDefault();
+          return;
+        }
+        testDisplay.innerHTML = e.value;
+      });
+      kb();
+      var testInput = document.getElementById('testInput').value;
+    </script>
+  </body>
+</html>

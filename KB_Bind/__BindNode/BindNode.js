@@ -10,6 +10,7 @@ define(['./__Bind','./__Diff'],function(CreateBind,CreateDiff){
       , _startBind = "{{"
       , _endBind = "}}"
       , _diff = CreateDiff()
+      , _pipedAttributes = {}
 
     function BindNode(node)
     {
@@ -21,34 +22,32 @@ define(['./__Bind','./__Diff'],function(CreateBind,CreateDiff){
       }
       _textMap = BindNode.splitBind(_initialText);
 
-      _textMap.forEach(function(k,i){
-        if(k.indexOf(_startBind) > -1 && k.indexOf(_endBind) > -1)
+      _textMap.map(function(k,i){
+        if(typeof k === 'string' && k.indexOf(_startBind) > -1 && k.indexOf(_endBind) > -1)
         {
           _Binds.push(CreateBind().bindName(k.split('|')[0].replace(_startBind,'').replace(/\s/g,''))
           .bindStartPosition((_isAttr ? _node.value : _node.textContent).indexOf(k))
           .bindText(k)
-          .attributes(k.split('|')[1].replace(_endBind).split(';').filter(function(d,x){
+          .textMap(_textMap)
+          .attributes(k.split('|')[1].replace(_endBind,"").split(';').filter(function(d,x){
             return (d.length > 0);
-          }).map(function(d,x){
-            var ret = {};
+          }).reduce(function(ret,d,x,a){
             ret[d.split('=')[0]] = d.split('=')[1];
             return ret;
-          })));
+          }),{}));
           if(_isAttr)
           {
-            _node.value = _Binds[_Binds.length-1](_node.value);
+            _node.value = _Binds[_Binds.length-1].value();
           }
           else
           {
-            _node.textContent = _Binds[_Binds.length-1](_node.textContent);
+            _node.textContent = _Binds[_Binds.length-1].value();
           }
+          return _Binds[_Binds.length-1];
         }
+        return k;
       });
       _updatedText = (_isAttr ? _node.value : _node.textContent);
-      /// currently working on mapping objects to text spots:
-      _textMap.map(function(k,i){
-        return (k.indexOf(_startBind) > -1 && k.indexOf(_endBind) ? BindNode.getBindById(k.split('|')[0].replace(_startBind,'').replace(/\s/g,'')) : k);
-      });
     }
 
     BindNode.startBind = function(v)
@@ -101,6 +100,16 @@ define(['./__Bind','./__Diff'],function(CreateBind,CreateDiff){
       return BindNode;
     }
 
+    BindNode.pipedAttributes = function(v)
+    {
+      if(v === undefined)
+      {
+        return _pipedAttributes;
+      }
+      _pipedAttributes = (typeof v === 'object' ? v : _pipedAttributes);
+      return BindNode;
+    }
+
     BindNode.splitBind = function(t)
     {
       return Array.prototype.concat.apply([],t.split(_startBind).map(function(k,i){
@@ -129,6 +138,7 @@ define(['./__Bind','./__Diff'],function(CreateBind,CreateDiff){
     BindNode.compareCheck = function()
     {
       var diff = _diff(_textMap,(_isAttr ? _node.value : _node.textContent));
+      console.log(diff);
     }
 
     BindNode.updateCheck = function()

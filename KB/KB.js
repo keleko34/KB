@@ -1,15 +1,14 @@
 define([],function(){
 	function CreateKB(){
 
-      /* BUILD SECTION */
-      /* END BUILD SECTION */
-
         var _attrListeners = {}
-          , _attrUpdateListeners = {};
+          , _attrUpdateListeners = {}
+          , _injected = []
+          , _inputs = [];
 
         function Bind()
         {
-          var changeEvent = function(el,attr,value,oldValue,args){
+          var changeEvent = function(el,attr,value,oldValue,args,action){
             this.stopPropagation = function(){this._stopPropogation = true;};
             this.preventDefault = function(){this._preventDefault = true;};
             this.value = value;
@@ -17,6 +16,7 @@ define([],function(){
             this.target = el;
             this.attr = attr;
             this.arguments = args;
+            this.action = action;
           }
 
           var set = function(el,prop,val,ret,args){
@@ -39,8 +39,8 @@ define([],function(){
             return true;
           }
 
-          var update = function(el,prop,val,ret,args){
-            var e = new changeEvent(el,prop,val,ret,args);
+          var update = function(el,prop,val,ret,args,action){
+            var e = new changeEvent(el,prop,val,ret,args,action);
             if(_attrUpdateListeners[prop] !== undefined)
             {
               for(var x=0;x<_attrUpdateListeners[prop].length;x+=1)
@@ -59,18 +59,89 @@ define([],function(){
             return true;
           }
 
+          var reSyncInputs = function(){
+            var x=0,
+                i = document.getElementsByTagName('INPUT');
+            for(x=0;x<_inputs.length;x++)
+            {
+              if(_inputs[x].parentElement === undefined)
+              {
+                _inputs[x].kb_removeInputBinding();
+                _inputs.splice(x,1);
+              }
+            }
+            for(x=0;x<i.length;x++)
+            {
+              if(i[x].kb_onkeydown === undefined)
+              {
+                i[x].kb_addInputBinding();
+              }
+            }
+          }
+
+          Bind.inject(HTMLInputElement,set,update);
           Bind.inject(Node,set,update);
           Bind.inject(Element,set,update);
           Bind.inject(HTMLElement,set,update);
           Bind.inject(Document,set,update);
+
+
+          //for keeping binds with inputs
+          Bind.addAttrUpdateListener('appendChild',reSyncInputs);
+          Bind.addAttrUpdateListener('removeChild',reSyncInputs);
+          Bind.addAttrUpdateListener('innerHTML',reSyncInputs);
+          Bind.addAttrUpdateListener('outerHTML',reSyncInputs);
+          Bind.addAttrUpdateListener('innerText',reSyncInputs);
+          Bind.addAttrUpdateListener('outerText',reSyncInputs);
+          Bind.addAttrUpdateListener('textContent',reSyncInputs);
+
+          reSyncInputs();
         }
 
         Bind.inject = function(obj,set,update){
           var _proto = obj.prototype,
+              _injectName = obj.toString().split(/\s+/)[1].split('{')[0].replace('()',''),
               _keys = Object.keys(_proto),
               x,
               _descriptors = {},
-              _functions = {};
+              _functions = {},
+              _onKeyDown = function(e){
+                var oldValue = this.value;
+                setTimeout((function(){
+                  console.log('yay',this.value);
+                  if(!set(this,'value',this.value,oldValue))
+                  {
+                    _descriptors["value"].set.call(this,oldValue);
+                  }
+                  else
+                  {
+                    if(typeof update === 'function')
+                    {
+                      update(this,"value",this.value,oldValue);
+                    }
+                  }
+                }).bind(this),0);
+              }
+
+          if(_injected.indexOf(_injectName) > -1) return;
+
+          _injected.push(_injectName);
+
+          if(_keys.indexOf("value") > -1)
+          {
+            var removeInputBinding = function(){
+              this.kb_onkeydown = undefined;
+              this.removeEventListener('keydown',_onKeyDown);
+            }
+            var addInputBinding = function(){
+              this.kb_onkeydown = true;
+              this.addEventListener('keydown',_onKeyDown);
+            }
+
+            Object.defineProperty(_proto,"kb_removeInputBinding",{value:removeInputBinding});
+            Object.defineProperty(_proto,"kb_addInputBinding",{value:addInputBinding});
+          }
+
 
           for(x=0;x<_keys.length;x+=1)
           {
@@ -116,6 +187,11 @@ define([],function(){
               }(_keys[x]))
           }
           return Bind;
+        }
+
+        Bind.injected = function()
+        {
+          return _injected;
         }
 
         Bind.addAttrListener = function(attr,func)
