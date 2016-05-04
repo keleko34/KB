@@ -1,5 +1,5 @@
 # KB
-DOM Attr Binding Library
+DOM Attr/Property Binding Library - A library for Prototype Binding and Events!
 
 IE 9+,Chrome,Firefox,Safari
 
