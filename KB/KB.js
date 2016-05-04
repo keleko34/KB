@@ -1,13 +1,22 @@
 define([],function(){
 	function CreateKB(){
 
+        //holds all preset listeners per attribute eg: {innerHTML:[func,func,func]}
         var _attrListeners = {}
+        //holds all postset listeners per attribute eg: {innerHTML:[func,func,func]}
           , _attrUpdateListeners = {}
-          , _injected = []
-          , _inputs = [];
+        //holds all injected objects and thier descriptors, functions and set and update functions eg: {HTMLElement:{obj:HTMLElement,proto:HTMLElement.prototype,descriptors:{},functions:{},set:function(){},update:function(){}}}
+          , _injected = {}
+        //holds all synced inputs for checking value updates
+          , _inputs = []
+        //used in all for loops
+          , x;
 
+
+        /*** MAIN CONSTRUCTOR ***/
         function Bind()
         {
+          //the base event object that is passed to every listeners upon change
           var changeEvent = function(el,attr,value,oldValue,args,action){
             this.stopPropagation = function(){this._stopPropogation = true;};
             this.preventDefault = function(){this._preventDefault = true;};
@@ -19,26 +28,29 @@ define([],function(){
             this.action = action;
           }
 
+          //the set function that runs on all changes
           var set = function(el,prop,val,ret,args){
             var e = new changeEvent(el,prop,val,ret,args);
+            var ret = true;
             if(_attrListeners[prop] !== undefined)
             {
-              for(var x=0;x<_attrListeners[prop].length;x+=1)
+              for(x=0;x<_attrListeners[prop].length;x+=1)
               {
                 _attrListeners[prop][x].call(el,e);
                 if(e._stopPropogation)
                 {
-                  return true;
+                  return ret;
                 }
                 if(e._preventDefault)
                 {
-                  return false;
+                  ret = false;
                 }
               }
             }
-            return true;
+            return ret;
           }
 
+          //the update function that runs on all changes
           var update = function(el,prop,val,ret,args,action){
             var e = new changeEvent(el,prop,val,ret,args,action);
             if(_attrUpdateListeners[prop] !== undefined)
@@ -59,6 +71,7 @@ define([],function(){
             return true;
           }
 
+          //resyncs inputs in case new ones were added to the DOM or old ones were removed
           var reSyncInputs = function(){
             var x=0,
                 i = document.getElementsByTagName('INPUT');
@@ -79,12 +92,62 @@ define([],function(){
             }
           }
 
+          //checks attributes inside of setAttribute and removeAttribute
+          var checkAttributes = function(e)
+          {
+            var et = new changeEvent(e.target,e.arguments[0],(e.attr === 'setAttribute' ? e.arguments[1] : ""),e.target.getAttribute(e.arguments[0]),(e.attr === 'setAttribute' ? [e.arguments[1]] : [""]));
+            if(_attrListeners[et.attr] !== undefined)
+            {
+              for(x=0;x<_attrListeners[et.attr].length;x+=1)
+              {
+                _attrListeners[et.attr][x].call(et.target,et);
+                if(et._stopPropogation)
+                {
+                  e.stopPropagation();
+                }
+                if(et._preventDefault)
+                {
+                  e.preventDefault();
+                }
+              }
+            }
+          }
+
+          var checkUpdateAttributes = function(e)
+          {
+            var et = new changeEvent(e.target,e.arguments[0],(e.attr === 'setAttribute' ? e.arguments[1] : ""),e.target.getAttribute(e.arguments[0]),(e.attr === 'setAttribute' ? [e.arguments[1]] : [""]));
+            if(_attrUpdateListeners[et.attr] !== undefined)
+            {
+              for(x=0;x<_attrUpdateListeners[et.attr].length;x+=1)
+              {
+                _attrUpdateListeners[et.attr][x].call(et.target,et);
+                if(et._stopPropogation)
+                {
+                  e.stopPropagation();
+                }
+              }
+            }
+          }
+
+          //injects main prototypes for listening to dom changes
           Bind.inject(HTMLInputElement,set,update);
           Bind.inject(Node,set,update);
           Bind.inject(Element,set,update);
           Bind.inject(HTMLElement,set,update);
           Bind.inject(Document,set,update);
 
+          var injectedKeys = Object.keys(_injected);
+
+          //checks if any objects were injected without a set, if so the default set and get are added
+          for(x=0;x<injectedKeys.length;x++)
+          {
+            if(_injected[injectedKeys[x]].set === undefined)
+            {
+              Bind.inject(_injected[injectedKeys[x]].obj,set,update);
+            }
+          }
+
+          Object.keys(_injected).forEach(function(k,i){});
 
           //for keeping binds with inputs
           Bind.addAttrUpdateListener('appendChild',reSyncInputs);
@@ -95,16 +158,105 @@ define([],function(){
           Bind.addAttrUpdateListener('outerText',reSyncInputs);
           Bind.addAttrUpdateListener('textContent',reSyncInputs);
 
+          //allows for html attribute changes to be listened to just like properties
+          Bind.addAttrListener('setAttribute',checkAttributes);
+          Bind.addAttrListener('removeAttribute',checkAttributes);
+
+          Bind.addAttrUpdateListener('setAttribute',checkUpdateAttributes);
+          Bind.addAttrUpdateListener('removeAttribute',checkUpdateAttributes);
+
+          //initially adds inputs for watching
           reSyncInputs();
         }
 
+        Bind.injectProperty = function(obj,key,set,update)
+        {
+          var _proto = obj.prototype,
+              _descriptor = Object.getOwnPropertyDescriptor(_proto,key),
+              _injectName = obj.toString().split(/\s+/)[1].split('{')[0].replace('()','');
+          if(_injected[_injectName] === undefined)
+          {
+            _injected[_injectName] = {obj:obj,proto:_proto,descriptors:{},set:undefined,update:undefined};
+          }
+          _injected[_injectName].set = (set !== undefined ? set : _injected[_injectName].set);
+          _injected[_injectName].update = (update !== undefined ? update : _injected[_injectName].update);
+
+          _injected[_injectName].descriptors[key] = _descriptor;
+
+          if(_descriptor.set !== undefined && _descriptor.configurable)
+          {
+              Object.defineProperty(_proto,key,{
+                  get:_descriptor.get,
+                  set:function(v)
+                  {
+                      var oldValue = _descriptor.get.apply(this);
+                      if(typeof _injected[_injectName].set == 'function' && _injected[_injectName].set(this,key,v,oldValue,arguments))
+                      {
+                        _descriptor.set.apply(this,arguments);
+                      }
+                      if(typeof _injected[_injectName].update === 'function')
+                      {
+                        _injected[_injectName].update(this,key,v,oldValue);
+                      }
+                  },
+                  enumerable:true,
+                  configurable:true
+              });
+          }
+          else if(typeof _descriptor.value === 'function')
+          {
+              Object.defineProperty(_proto,key,{
+                  value:function()
+                  {
+                    var action = null;
+                    if(typeof _injected[_injectName].set == 'function' && _injected[_injectName].set(this,key,null,null,arguments))
+                    {
+                      action =  _descriptor.value.apply(this,arguments);
+                    }
+                    if(typeof _injected[_injectName].update === 'function')
+                    {
+                      _injected[_injectName].update(this,key,null,null,arguments,action);
+                    }
+                    return action;
+                  },
+                  writable:true,
+                  enumerable:true,
+                  configurable:true
+              });
+          }
+        else if(_descriptor.value !== undefined && _descriptor.configurable)
+        {
+          Object.defineProperty(_proto,key,{
+              get:function()
+              {
+                return _descriptor.value;
+              },
+              set:function(v)
+              {
+                  var oldValue = _descriptor.value;
+                  if(typeof _injected[_injectName].set == 'function' && _injected[_injectName].set(this,key,v,oldValue))
+                  {
+                    _descriptor.value = v;
+                  }
+                  if(typeof _injected[_injectName].update === 'function')
+                  {
+                    _injected[_injectName].update(this,key,v,oldValue);
+                  }
+              },
+              enumerable:true,
+              configurable:true
+          });
+        }
+        }
+
+        /*** Inject Method ***
+         -- injects an objects prototypes to allow for property event listeners
+         */
         Bind.inject = function(obj,set,update){
           var _proto = obj.prototype,
               _injectName = obj.toString().split(/\s+/)[1].split('{')[0].replace('()',''),
               _keys = Object.keys(_proto),
-              x,
               _descriptors = {},
-              _functions = {},
               _onKeyDown = function(e){
                 var oldValue = this.value;
                 setTimeout((function(){
@@ -122,9 +274,13 @@ define([],function(){
                 }).bind(this),0);
               }
 
-          if(_injected.indexOf(_injectName) > -1) return;
+          if(_injected[_injectName] === undefined)
+          {
+            _injected[_injectName] = {obj:obj,proto:_proto,descriptors:{},set:undefined,update:undefined};
+          }
+          _injected[_injectName].set = set;
+          _injected[_injectName].update = update;
 
-          _injected.push(_injectName);
 
           if(_keys.indexOf("value") > -1)
           {
@@ -137,62 +293,32 @@ define([],function(){
               this.addEventListener('keydown',_onKeyDown);
             }
 
-            Object.defineProperty(_proto,"kb_removeInputBinding",{value:removeInputBinding});
-            Object.defineProperty(_proto,"kb_addInputBinding",{value:addInputBinding});
+            Object.defineProperty(_proto,"kb_removeInputBinding",{value:removeInputBinding,configurable:true,enumerable:true});
+            Object.defineProperty(_proto,"kb_addInputBinding",{value:addInputBinding,configurable:true,enumerable:true});
           }
 
 
           for(x=0;x<_keys.length;x+=1)
           {
-              (function(key){
-                  _descriptors[key] = Object.getOwnPropertyDescriptor(_proto,key);
-                  if(_descriptors[key].set !== undefined)
-                  {
-                      Object.defineProperty(_proto,key,{
-                          get:_descriptors[key].get,
-                          set:function(v)
-                          {
-                              var oldValue = _descriptors[key].get.apply(this);
-                              if(set(this,key,v,oldValue))
-                              {
-                                _descriptors[key].set.apply(this,arguments);
-                              }
-                              if(typeof update === 'function')
-                              {
-                                update(this,key,v,oldValue);
-                              }
-                          },
-                          enumerable:true,
-                          configurable:true
-                      });
-                  }
-                  else if(typeof _descriptors[key].value === 'function')
-                  {
-                      _functions[key] = _descriptors[key].value;
-                      _proto[key] = function()
-                      {
-                          var action = null;
-                          if(set(this,key,null,null,arguments))
-                          {
-                            action = _functions[key].apply(this,arguments);
-                          }
-                          if(typeof update === 'function')
-                          {
-                            update(this,key,null,null,arguments,action);
-                          }
-                          return action;
-                      }
-                  }
-              }(_keys[x]))
+              if(_injected[_injectName].descriptors[_keys[x]] === undefined)
+              {
+                Bind.injectProperty(obj,_keys[x]);
+              }
           }
           return Bind;
         }
 
+        /*** Injected Accessor ***
+         -- returns a list of the injected objects
+         */
         Bind.injected = function()
         {
           return _injected;
         }
 
+        /*** Pre Set Attribute Listener ***
+         -- adds a property event listener to the desired property
+         */
         Bind.addAttrListener = function(attr,func)
         {
           if(_attrListeners[attr] === undefined)
@@ -206,6 +332,9 @@ define([],function(){
           return Bind;
         }
 
+        /*** Post Set Attribute Listener ***
+         -- adds a property event listener to the desired property
+         */
         Bind.addAttrUpdateListener = function(attr,func)
         {
           if(_attrUpdateListeners[attr] === undefined)
@@ -219,6 +348,9 @@ define([],function(){
           return Bind;
         }
 
+        /*** Remove Pre Set Attribute Listener ***
+         -- removes a property event listener from the desired property
+         */
         Bind.removeAttrListener = function(attr,func)
         {
           if(_attrListeners[attr] !== undefined && typeof func === 'function')
@@ -233,6 +365,9 @@ define([],function(){
           }
         }
 
+        /*** Remove Post Set Attribute Listener ***
+         -- removes a property event listener from the desired property
+         */
         Bind.removeAttrUpdateListener = function(attr,func)
         {
           if(_attrUpdateListeners[attr] !== undefined && typeof func === 'function')

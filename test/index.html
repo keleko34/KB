@@ -6,7 +6,7 @@
   <body>
     <input id="testInput" type="text" />
     <div id="testDisplay"></div>
-    <script type="text/javascript" src="KB/Build/KB.js"></script>
+    <script type="text/javascript" src="../KB/Build/KB.js"></script>
     <script type="text/javascript">
       var testDisplay = document.getElementById('testDisplay');
       var kb = CreateKB();
@@ -24,8 +24,26 @@
       })
       .addAttrListener('innerHTML',function(e){
         console.log(e); //fires when input value changes
+      })
+      .addAttrListener('add',function(e){
+        console.log(e);
+        if(e.arguments[0]+e.arguments[1] === 10)
+        {
+          e.preventDefault();
+        }
       });
+
+      function myObject(){};
+
+      myObject.prototype.add = function(a,b){return a+b;};
+
+      kb.inject(myObject);
+
       kb();
+
+      var test = new myObject();
+      var out = test.add(5,5);
+      console.log(out);
       var testInput = document.getElementById('testInput').value;
     </script>
   </body>

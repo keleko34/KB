@@ -1,13 +1,20 @@
 # History
 
-## 0.0.4 / 2016-04-21
+## 0.1.2 / 2016-04-21
 
-- [Release] Full release as package
+- [Update] HTML Attribute values are listened to just as if properties eg setAttribute and removeAttribute fire standard events as properties
+- [Update] Added value type descriptors to inject for default made object prototype properties
+- [Update] Added injectProperty method for injecting a single property
+- [Update] inject method can now be ran multiple times on the same object in case of an added property or change to set/update
+
+## 0.1.0 / 2016-04-21
+
+- [Update] Input value event listeners now fire if You attach listener to value attribute
 
 ## 0.0.8 / 2016-04-21
 
 - [Update] Allowed for post set event listeners
 
-## 0.1.0 / 2016-04-21
+## 0.0.4 / 2016-04-21
 
-- [Update] Input value event listeners now fire if You attach listener to value attribute
+- [Release] Full release as package
