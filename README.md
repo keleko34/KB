@@ -103,6 +103,7 @@ This library allows for adding attribute/property change listeners on the front 
 
 ###### Methods
 
+ -
  **Adds an event to the event chain for the change of that attribute** *Pre Value Set*
  - addAttrListener (*String 'Property',*Function Callback)
  
