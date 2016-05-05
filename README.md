@@ -103,23 +103,23 @@ This library allows for adding attribute/property change listeners on the front 
 
 ###### Methods
 
- addAttrListener (*String 'Property',*Function Callback)
+ addAttrListener (*String 'Property',*Function Callback)<br />
  **Adds an event to the event chain for the change of that attribute** *Pre Value Set*
  
- removeAttrListener (*String 'Property',*Function Callback)
+ removeAttrListener (*String 'Property',*Function Callback)<br />
  **Removes event from the event chain that matches** *Pre Value Set*
  
- addAttrUpdateListener (*String 'Property',*Function Callback)
+ addAttrUpdateListener (*String 'Property',*Function Callback)<br />
  **Adds an event to the event chain for the post change of that attribute** *Post Value Set*
  
- removeAttrUpdateListener (*String 'Property',*Function Callback)
+ removeAttrUpdateListener (*String 'Property',*Function Callback)<br />
  **Removes event from the event chain that matches in the post events** *Post Value Set*
  
- injectproperty (*Function Constructor w/prototype, *String key, *Function set, *Function update)
+ injectproperty (*Function Constructor w/prototype, *String key, *Function set, *Function update)<br />
  **injects single property on the objects prototype, set and update are optional and will be applied as the set and update for entire Object Constructor, located in .injected()**
  
- inject (*Function Constructor w/prototype, *Function set, *Function update)
+ inject (*Function Constructor w/prototype, *Function set, *Function update)<br />
  **injects object constructor prototypes with the set Function, and update Function, functions optional, constructor will auto put defaults if none exist note* inject only works with (function name(){}) type objects formats and not (var name = function(){}) as these type functions are named as ""**
  
- injected ()
+ injected ()<br />
  **returns an object of all injected objects**
