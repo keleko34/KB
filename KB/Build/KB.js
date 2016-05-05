@@ -10,67 +10,60 @@ var CreateKB = (function(){
         //holds all synced inputs for checking value updates
           , _inputs = []
         //used in all for loops
-          , x;
+          , x
+        //the base event object that is passed to every listeners upon change
+          , _changeEvent = function(el,attr,value,oldValue,args,action){
+              this.stopPropagation = function(){this._stopPropogation = true;};
+              this.preventDefault = function(){this._preventDefault = true;};
+              this.value = value;
+              this.oldValue = oldValue;
+              this.target = el;
+              this.attr = attr;
+              this.arguments = args;
+              this.action = action;
+            }
+        //the set function that runs on all changes
+          , _set = function(el,prop,val,ret,args){
+              var e = new _changeEvent(el,prop,val,ret,args);
+              var ret = true;
 
-
-        /*** MAIN CONSTRUCTOR ***/
-        function Bind()
-        {
-          //the base event object that is passed to every listeners upon change
-          var changeEvent = function(el,attr,value,oldValue,args,action){
-            this.stopPropagation = function(){this._stopPropogation = true;};
-            this.preventDefault = function(){this._preventDefault = true;};
-            this.value = value;
-            this.oldValue = oldValue;
-            this.target = el;
-            this.attr = attr;
-            this.arguments = args;
-            this.action = action;
-          }
-
-          //the set function that runs on all changes
-          var set = function(el,prop,val,ret,args){
-            var e = new changeEvent(el,prop,val,ret,args);
-            var ret = true;
-
-            if(_attrListeners[prop] !== undefined)
-            {
-              for(x=0;x<_attrListeners[prop].length;x+=1)
+              if(_attrListeners[prop] !== undefined)
               {
-                _attrListeners[prop][x].call(el,e);
-                if(e._stopPropogation)
+                for(x=0;x<_attrListeners[prop].length;x+=1)
                 {
-                  return ret;
-                }
-                if(e._preventDefault)
-                {
-                  ret = false;
+                  _attrListeners[prop][x].call(el,e);
+                  if(e._stopPropogation)
+                  {
+                    return ret;
+                  }
+                  if(e._preventDefault)
+                  {
+                    ret = false;
+                  }
                 }
               }
-            }
 
-            if(el.kb_attrListeners !== undefined && el.kb_attrListeners[prop] !== undefined)
-            {
-              for(x=0;x<el.kb_attrListeners[prop].length;x+=1)
+              if(el.kb_attrListeners !== undefined && el.kb_attrListeners[prop] !== undefined)
               {
-                el.kb_attrListeners[prop][x].call(el,e);
-                if(e._stopPropogation)
+                for(x=0;x<el.kb_attrListeners[prop].length;x+=1)
                 {
-                  return ret;
-                }
-                if(e._preventDefault)
-                {
-                  ret = false;
+                  el.kb_attrListeners[prop][x].call(el,e);
+                  if(e._stopPropogation)
+                  {
+                    return ret;
+                  }
+                  if(e._preventDefault)
+                  {
+                    ret = false;
+                  }
                 }
               }
+
+              return ret;
             }
-
-            return ret;
-          }
-
-          //the update function that runs on all changes
-          var update = function(el,prop,val,ret,args,action){
-            var e = new changeEvent(el,prop,val,ret,args,action);
+        //the update function that runs on all changes
+          , _update = function(el,prop,val,ret,args,action){
+            var e = new _changeEvent(el,prop,val,ret,args,action);
             var ret = true;
             if(_attrUpdateListeners[prop] !== undefined)
             {
@@ -107,6 +100,11 @@ var CreateKB = (function(){
             return ret;
           }
 
+
+        /*** MAIN CONSTRUCTOR ***/
+        function Bind()
+        {
+
           //resyncs inputs in case new ones were added to the DOM or old ones were removed
           var reSyncInputs = function(){
             var x=0,
@@ -135,7 +133,7 @@ var CreateKB = (function(){
           //checks attributes inside of setAttribute and removeAttribute
           var checkAttributes = function(e)
           {
-            var et = new changeEvent(e.target,e.arguments[0],(e.attr === 'setAttribute' ? e.arguments[1] : ""),e.target.getAttribute(e.arguments[0]),(e.attr === 'setAttribute' ? [e.arguments[1]] : [""]));
+            var et = new _changeEvent(e.target,e.arguments[0],(e.attr === 'setAttribute' ? e.arguments[1] : ""),e.target.getAttribute(e.arguments[0]),(e.attr === 'setAttribute' ? [e.arguments[1]] : [""]));
             if(_attrListeners[et.attr] !== undefined)
             {
               for(x=0;x<_attrListeners[et.attr].length;x+=1)
@@ -155,7 +153,7 @@ var CreateKB = (function(){
 
           var checkUpdateAttributes = function(e)
           {
-            var et = new changeEvent(e.target,e.arguments[0],(e.attr === 'setAttribute' ? e.arguments[1] : ""),e.target.getAttribute(e.arguments[0]),(e.attr === 'setAttribute' ? [e.arguments[1]] : [""]));
+            var et = new _changeEvent(e.target,e.arguments[0],(e.attr === 'setAttribute' ? e.arguments[1] : ""),e.target.getAttribute(e.arguments[0]),(e.attr === 'setAttribute' ? [e.arguments[1]] : [""]));
             if(_attrUpdateListeners[et.attr] !== undefined)
             {
               for(x=0;x<_attrUpdateListeners[et.attr].length;x+=1)
@@ -169,14 +167,6 @@ var CreateKB = (function(){
             }
           }
 
-          //injects main prototypes for listening to dom changes
-          Bind.injectPrototypes(HTMLInputElement,set,update);
-          Bind.injectPrototypes(HTMLTextAreaElement,set,update);
-          Bind.injectPrototypes(Node,set,update);
-          Bind.injectPrototypes(Element,set,update);
-          Bind.injectPrototypes(HTMLElement,set,update);
-          Bind.injectPrototypes(Document,set,update);
-
           var injectedKeys = Object.keys(_injected);
 
           //checks if any objects were injected without a set, if so the default set and get are added
@@ -184,7 +174,7 @@ var CreateKB = (function(){
           {
             if(_injected[injectedKeys[x]].set === undefined)
             {
-              Bind.injectPrototypes(_injected[injectedKeys[x]].obj,set,update);
+              Bind.injectPrototypes(_injected[injectedKeys[x]].obj,_set,_update);
             }
           }
 
@@ -534,6 +524,14 @@ var CreateKB = (function(){
             return Bind;
           }
         }
+
+        //injects main prototypes for listening to dom changes
+        Bind.injectPrototypes(HTMLInputElement,_set,_update);
+        Bind.injectPrototypes(HTMLTextAreaElement,_set,_update);
+        Bind.injectPrototypes(Node,_set,_update);
+        Bind.injectPrototypes(Element,_set,_update);
+        Bind.injectPrototypes(HTMLElement,_set,_update);
+        Bind.injectPrototypes(Document,_set,_update);
 
         return Bind;
 	}

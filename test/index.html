@@ -2,6 +2,7 @@
 <html>
   <head>
     <title>Testing</title>
+    <script type="text/javascript" src="../KB/Build/KB.js"></script>
   </head>
   <body>
     <h1 id="testDiv">Test Title</h1>
@@ -10,13 +11,12 @@
     <input id="testInputRadio" type="radio" />
     <textarea id="testTextarea"></textarea>
     <div id="testDisplay"></div>
-    <script type="text/javascript" src="../KB/Build/KB.js"></script>
     <script type="text/javascript">
       var testDisplay = document.getElementById('testDisplay');
       var testInput = document.getElementById('testInput');
       var textAreaInput = document.getElementById('testTextarea');
       var kb = CreateKB();
-      kb.call();
+
       testInput.addAttrListener('value',function(e){
         console.log(e);
         if(e.value === 'cool')
