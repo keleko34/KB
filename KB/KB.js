@@ -134,12 +134,12 @@ define([],function(){
           }
 
           //injects main prototypes for listening to dom changes
-          Bind.inject(HTMLInputElement,set,update);
-          Bind.inject(HTMLTextAreaElement,set,update);
-          Bind.inject(Node,set,update);
-          Bind.inject(Element,set,update);
-          Bind.inject(HTMLElement,set,update);
-          Bind.inject(Document,set,update);
+          Bind.injectPrototypes(HTMLInputElement,set,update);
+          Bind.injectPrototypes(HTMLTextAreaElement,set,update);
+          Bind.injectPrototypes(Node,set,update);
+          Bind.injectPrototypes(Element,set,update);
+          Bind.injectPrototypes(HTMLElement,set,update);
+          Bind.injectPrototypes(Document,set,update);
 
           var injectedKeys = Object.keys(_injected);
 
@@ -148,7 +148,7 @@ define([],function(){
           {
             if(_injected[injectedKeys[x]].set === undefined)
             {
-              Bind.inject(_injected[injectedKeys[x]].obj,set,update);
+              Bind.injectPrototypes(_injected[injectedKeys[x]].obj,set,update);
             }
           }
 
@@ -174,7 +174,7 @@ define([],function(){
           reSyncInputs();
         }
 
-        Bind.injectProperty = function(obj,key,set,update)
+        Bind.injectPrototypeProperty = function(obj,key,set,update)
         {
           var _proto = obj.prototype,
               _descriptor = Object.getOwnPropertyDescriptor(_proto,key),
@@ -257,7 +257,7 @@ define([],function(){
         /*** Inject Method ***
          -- injects an objects prototypes to allow for property event listeners
          */
-        Bind.inject = function(obj,set,update){
+        Bind.injectPrototypes = function(obj,set,update){
           var _proto = obj.prototype,
               _injectName = obj.toString().split(/\s+/)[1].split('{')[0].replace('()',''),
               _keys = Object.keys(_proto),
@@ -339,7 +339,7 @@ define([],function(){
           {
               if(_injected[_injectName].descriptors[_keys[x]] === undefined)
               {
-                Bind.injectProperty(obj,_keys[x]);
+                Bind.injectPrototypeProperty(obj,_keys[x]);
               }
           }
           return Bind;
@@ -348,7 +348,7 @@ define([],function(){
         /*** Injected Accessor ***
          -- returns a list of the injected objects
          */
-        Bind.injected = function()
+        Bind.injectedPrototypes = function()
         {
           return _injected;
         }
