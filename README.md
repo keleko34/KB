@@ -10,52 +10,85 @@ This library allows for adding attribute/property change listeners on the front 
 `npm install KB`
 
 ###### Start
+*note: order of operation does not matter, Methods are chainable*
 
-`var kb = CreateKB();` -- Creates new KB same as 'new Method();'
-
-`kb.addAttrListener('innerHTML',function(e){console.log(e);});` -- Works in the same way as addEventListener //prevalueset
-
-`kb.addAttrUpdateListener('innerHTML',function(e){console.log(e);});` -- Works in the same way as addEventListener //postvalueset
-
-`kb.call();` -- Starts the listening, Constructor
+    /* Creates new KB, same as 'new method();' */
+    var kb = CreateKB();
+    
+    /* Pre Value Set */
+    kb.addAttrListener('innerHTML',function(e){console.log(e);});
+    
+    /* Post Value Set */
+    kb.addAttrUpdateListener('innerHTML',function(e){console.log(e);});
+    
+    /* Constructor */
+    kb.call();
 
 ###### Use With DOM
 
-`var kb = CreateKB();'
-
-`var username = "";`
-
-`/* bind username value */` -- Set username var to the value in the field, if value is admin prevent the set
-`kb.addAttrListener('value',function(e){if(e.value === 'admin'){e.stopPropogration();e.preventDefault();return;};if(e.target.name === 'username'){username = e.value;}});`
-
-`/* filter name changes in html */` -- If added HTML contains fred, stop the set
-`kb.addAttrListener('innerHTML',function(e){if(e.value.indexOf('fred') > -1){e.stopPropogation();e.prevemtDefault();}});`
-
-`/* Watch for DOM additions */` -- Log all added dom nodes using appendChild
-`kb.addAttrUpdateListener('appendChild',function(e){console.log("DOM node: ",e.action);})`
-
-`/* Watch for class changes */` -- If element thats class is changing has an id of main prveent all class changes
-`kb.addAttrListener('class',function(e){if(e.target.getAttribute('id') === 'main'){e.preventDefault();});`
-
-`kb.call();`
+    var kb = CreateKB();
+    
+    /* Binding to input value */
+    var username = "";
+    kb.addAttrListener('value',function(e){
+      switch(e.target.name){
+        case 'username':
+          if(e.value === 'admin'){
+            e.stopPropogration();
+            e.preventDefault();
+            return;
+          };
+          username = e.value;
+        break;
+      }
+    });
+    
+    /* Filter innerHTML Changes */
+    kb.addAttrListener('innerHTML',function(e){
+      if(e.value.indexOf('fred') > -1){
+        e.stopPropogation();
+        e.prevemtDefault();
+      }
+    });
+    
+    /* Watch for appended elements */
+    kb.addAttrUpdateListener('appendChild',function(e){
+      console.log("DOM node: ",e.action);
+    });
+    
+    /* Prevent class additions */
+    kb.addAttrListener('class',function(e){
+      if(e.target.getAttribute('id') === 'main'){
+        e.preventDefault();
+      }
+    });
+    
+    kb.call();
 
 ###### Use With Custom Objects
 
-`var kb = CreateKB();`
+    var kb = CreateKB();
+    
+    /* Custom Object */
+    function myObject(){};
+    myObject.prototype.add = function(a,b){return a+b;};
+    
+    /* Inject Prototype */
+    kb.inject(myObject);
+    
+    kb.addAttrListener('add',function(e){
+      console.log('first #',e.arguments[0],'second #',e.arguments[1]);
+      if(e.arguments[0] + e.arguments[1] === 10){
+        e.preventDefault();
+      }
+    });
+    
+    kb.call();
 
-`function myObject(){};`
-
-`myObject.prototype.add = function(a,b){return a+b;};`
-
-`kb.inject(myObject);`
-
-`/* listen to add method */` -- Log add method argumetns when ran, if argument 0 conatins 5 prevent method from running
-`kb.addAttrListener('add',function(e){console.log('first #',e.arguments[0],'second #',e.arguments[1]);if(e.arguments[0] === 5){e.preventDefault();}})`
-
-`kb.call();`
-
-`var calc = new myObject(); calc.add(10,20);`
-`Logs: "first # 10 second # 20"`
+    var calc = new myObject(); 
+    calc.add(10,20);
+    
+    Logs: "first # 10 second # 20"
 
 ###### Event Properties
 
