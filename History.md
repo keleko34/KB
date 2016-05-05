@@ -1,5 +1,9 @@
 # History
 
+## 0.1.8 / 2016-05-05
+
+- [Update] listeners can be applied directly to individual elements now rather than just global
+
 ## 0.1.5 / 2016-05-05
 
 - [Update] Textarea value change now fires value listener

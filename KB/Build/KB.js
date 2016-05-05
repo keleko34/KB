@@ -32,6 +32,7 @@ var CreateKB = (function(){
           var set = function(el,prop,val,ret,args){
             var e = new changeEvent(el,prop,val,ret,args);
             var ret = true;
+
             if(_attrListeners[prop] !== undefined)
             {
               for(x=0;x<_attrListeners[prop].length;x+=1)
@@ -47,12 +48,30 @@ var CreateKB = (function(){
                 }
               }
             }
+
+            if(el.kb_attrListeners !== undefined && el.kb_attrListeners[prop] !== undefined)
+            {
+              for(x=0;x<el.kb_attrListeners[prop].length;x+=1)
+              {
+                el.kb_attrListeners[prop][x].call(el,e);
+                if(e._stopPropogation)
+                {
+                  return ret;
+                }
+                if(e._preventDefault)
+                {
+                  ret = false;
+                }
+              }
+            }
+
             return ret;
           }
 
           //the update function that runs on all changes
           var update = function(el,prop,val,ret,args,action){
             var e = new changeEvent(el,prop,val,ret,args,action);
+            var ret = true;
             if(_attrUpdateListeners[prop] !== undefined)
             {
               for(var x=0;x<_attrUpdateListeners[prop].length;x+=1)
@@ -60,15 +79,32 @@ var CreateKB = (function(){
                 _attrUpdateListeners[prop][x].call(el,e);
                 if(e._stopPropogation)
                 {
-                  return true;
+                  return ret;
                 }
                 if(e._preventDefault)
                 {
-                  return false;
+                  ret = false;
                 }
               }
             }
-            return true;
+
+            if(el.kb_attrUpdateListeners !== undefined && el.kb_attrUpdateListeners[prop] !== undefined)
+            {
+              for(var x=0;x<el.kb_attrUpdateListeners[prop].length;x+=1)
+              {
+                el.kb_attrUpdateListeners[prop][x].call(el,e);
+                if(e._stopPropogation)
+                {
+                  return ret;
+                }
+                if(e._preventDefault)
+                {
+                  ret = false;
+                }
+              }
+            }
+
+            return ret;
           }
 
           //resyncs inputs in case new ones were added to the DOM or old ones were removed
@@ -179,6 +215,20 @@ var CreateKB = (function(){
           var _proto = obj.prototype,
               _descriptor = Object.getOwnPropertyDescriptor(_proto,key),
               _injectName = obj.toString().split(/\s+/)[1].split('{')[0].replace('()','');
+
+          if(_proto.addAttrListener === undefined && _proto.kb_attrListeners === undefined)
+          {
+            _proto.kb_attrListeners = {};
+            _proto.addAttrListener = Bind.addAttrListener;
+            _proto.removeAttrListener = Bind.removeAttrListener;
+          }
+          if(_proto.addAttrUpdateListener === undefined && _proto.kb_attrUpdateListeners === undefined)
+          {
+            _proto.kb_attrUpdateListeners = {};
+            _proto.addAttrUpdateListener = Bind.addAttrUpdateListener;
+            _proto.removeAttrUpdateListener = Bind.removeAttrUpdateListener;
+          }
+
           if(_injected[_injectName] === undefined)
           {
             _injected[_injectName] = {obj:obj,proto:_proto,descriptors:{},set:undefined,update:undefined};
@@ -358,15 +408,30 @@ var CreateKB = (function(){
          */
         Bind.addAttrListener = function(attr,func)
         {
-          if(_attrListeners[attr] === undefined)
+          if(this.toString() !== Bind.toString())
           {
-            _attrListeners[attr] = [];
+            if(this.kb_attrListeners[attr] === undefined)
+            {
+              this.kb_attrListeners[attr] = [];
+            }
+            if(typeof func === 'function')
+            {
+              this.kb_attrListeners[attr].push(func);
+            }
+            return this;
           }
-          if(typeof func === 'function')
+          else
           {
-            _attrListeners[attr].push(func);
+            if(_attrListeners[attr] === undefined)
+            {
+              _attrListeners[attr] = [];
+            }
+            if(typeof func === 'function')
+            {
+              _attrListeners[attr].push(func);
+            }
+            return Bind;
           }
-          return Bind;
         }
 
         /*** Post Set Attribute Listener ***
@@ -374,15 +439,30 @@ var CreateKB = (function(){
          */
         Bind.addAttrUpdateListener = function(attr,func)
         {
-          if(_attrUpdateListeners[attr] === undefined)
+          if(this.toString() !== Bind.toString())
           {
-            _attrUpdateListeners[attr] = [];
+            if(this.kb_attrUpdateListeners[attr] === undefined)
+            {
+              this.kb_attrUpdateListeners[attr] = [];
+            }
+            if(typeof func === 'function')
+            {
+              this.kb_attrUpdateListeners[attr].push(func);
+            }
+            return this;
           }
-          if(typeof func === 'function')
+          else
           {
-            _attrUpdateListeners[attr].push(func);
+            if(_attrUpdateListeners[attr] === undefined)
+            {
+              _attrUpdateListeners[attr] = [];
+            }
+            if(typeof func === 'function')
+            {
+              _attrUpdateListeners[attr].push(func);
+            }
+            return Bind;
           }
-          return Bind;
         }
 
         /*** Remove Pre Set Attribute Listener ***
@@ -390,15 +470,33 @@ var CreateKB = (function(){
          */
         Bind.removeAttrListener = function(attr,func)
         {
-          if(_attrListeners[attr] !== undefined && typeof func === 'function')
+          if(this.toString() !== Bind.toString())
           {
-            for(var x=0;x<_attrListeners[attr].length;x+=1)
+            if(this.kb_attrListeners !== undefined && this.kb_attrListeners[attr] !== undefined && typeof func === 'function')
             {
-              if(_attrListeners[attr][x].toString() === func.toString())
+              for(var x=0;x<this.kb_attrListeners[attr].length;x+=1)
               {
-                _attrListeners[attr].splice(x,1);
+                if(this.kb_attrListeners[attr][x].toString() === func.toString())
+                {
+                  this.kb_attrListeners[attr].splice(x,1);
+                }
               }
             }
+            return this;
+          }
+          else
+          {
+            if(_attrListeners[attr] !== undefined && typeof func === 'function')
+            {
+              for(var x=0;x<_attrListeners[attr].length;x+=1)
+              {
+                if(_attrListeners[attr][x].toString() === func.toString())
+                {
+                  _attrListeners[attr].splice(x,1);
+                }
+              }
+            }
+            return Bind;
           }
         }
 
@@ -407,15 +505,33 @@ var CreateKB = (function(){
          */
         Bind.removeAttrUpdateListener = function(attr,func)
         {
-          if(_attrUpdateListeners[attr] !== undefined && typeof func === 'function')
+          if(this.toString() !== Bind.toString())
           {
-            for(var x=0;x<_attrUpdateListeners[attr].length;x+=1)
+            if(this.kb_attrUpdateListeners !== undefined && this.kb_attrUpdateListeners[attr] !== undefined && typeof func === 'function')
             {
-              if(_attrUpdateListeners[attr][x].toString() === func.toString())
+              for(var x=0;x<this.kb_attrUpdateListeners[attr].length;x+=1)
               {
-                _attrUpdateListeners[attr].splice(x,1);
+                if(this.kb_attrUpdateListeners[attr][x].toString() === func.toString())
+                {
+                  this.kb_attrUpdateListeners[attr].splice(x,1);
+                }
               }
             }
+            return this;
+          }
+          else
+          {
+            if(_attrUpdateListeners[attr] !== undefined && typeof func === 'function')
+            {
+              for(var x=0;x<_attrUpdateListeners[attr].length;x+=1)
+              {
+                if(_attrUpdateListeners[attr][x].toString() === func.toString())
+                {
+                  _attrUpdateListeners[attr].splice(x,1);
+                }
+              }
+            }
+            return Bind;
           }
         }
 

@@ -13,8 +13,11 @@
     <script type="text/javascript" src="../KB/Build/KB.js"></script>
     <script type="text/javascript">
       var testDisplay = document.getElementById('testDisplay');
+      var testInput = document.getElementById('testInput');
+      var textAreaInput = document.getElementById('testTextarea');
       var kb = CreateKB();
-      kb.addAttrListener('value',function(e){
+      kb.call();
+      testInput.addAttrListener('value',function(e){
         console.log(e);
         if(e.value === 'cool')
         {
@@ -23,7 +26,10 @@
         }
         testDisplay.innerHTML = e.value;
       })
-      .addAttrListener("checked",function(e){
+      textAreaInput.addAttrListener('value',function(e){
+        console.log(e);
+      });
+      kb.addAttrListener("checked",function(e){
         console.log(e);
       })
       .addAttrListener('appendChild',function(e){
@@ -51,7 +57,6 @@
       var test = new myObject();
       var out = test.add(5,5);
       console.log(out);
-      var testInput = document.getElementById('testInput').value;
     </script>
   </body>
 </html>

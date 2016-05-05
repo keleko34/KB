@@ -24,7 +24,8 @@ This library allows for adding attribute/property change listeners on the front 
     /* Constructor */
     kb.call();
 
-###### Use With DOM
+###### Use With DOM *Global*
+*note: With global listeners order of operation doesnt matter*
 
     var kb = CreateKB();
     
@@ -64,6 +65,31 @@ This library allows for adding attribute/property change listeners on the front 
     });
     
     kb.call();
+    
+###### Use With DOM *Element*
+*note: With Element listeners order of operation does matter, constructor must be called first before adding listeners*
+
+    var kb = CreateKB();
+    
+    /* Constructor */
+    kb.call();
+    
+    var myNode = document.querySelector('#myNode'),
+        myVar = myNode.innerHTML;
+    
+    /* Prevent class additions */
+    myNode.addAttrListener('class',function(e){
+      e.preventDefault();
+    })
+    .addAttrListener('className',function(e){
+      e.preventDefault();
+    });
+    
+    /* set variable to innerText of this node */
+    myNode.addAttrUpdateListener('innerHTML',function(e){
+      myVar = e.value;
+    });
+
 
 ###### Use With Custom Objects
 
@@ -74,7 +100,7 @@ This library allows for adding attribute/property change listeners on the front 
     myObject.prototype.add = function(a,b){return a+b;};
     
     /* Inject Prototype */
-    kb.inject(myObject);
+    kb.injectPrototypes(myObject);
     
     kb.addAttrListener('add',function(e){
       console.log('first #',e.arguments[0],'second #',e.arguments[1]);
