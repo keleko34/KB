@@ -85,7 +85,6 @@ This library allows for adding attribute/property change listeners on the front 
       myVar = e.value;
     });
     
-    /* Constructor */
     kb.call();
 
 
@@ -147,3 +146,11 @@ This library allows for adding attribute/property change listeners on the front 
  
  injectedPrototypes ()<br />
  **returns an object of all injected objects**
+ 
+###### Contributing
+
+**Build Tool** *Gulp*
+
+NPM: `npm i`
+CLI: `Gulp Build`
+Component `KB`
