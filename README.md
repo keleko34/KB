@@ -115,11 +115,11 @@ This library allows for adding attribute/property change listeners on the front 
  removeAttrUpdateListener (*String 'Property',Function Callback*)<br />
  **Removes event from the event chain that matches in the post events** *Post Value Set*
  
- injectproperty (*Function Constructor w/prototype, String key, Function set, Function update*)<br />
+ injectproperty (*Function Constructor with  prototype, String 'key', Function set, Function update*)<br />
  **injects single property on the objects prototype, set and update are optional and will be applied as the set and update for entire Object Constructor, located in `.injected()`**
  
- inject (*Function Constructor w/prototype, Function set, Function update*)<br />
- **injects object constructor prototypes with the set Function, and update Function, functions optional, constructor will auto put defaults if none exist note* inject only works with `(function name(){})` type objects formats and not `(var name = function(){})` as these type functions are named as ""**
+ inject (*Function Constructor with prototype, Function set, Function update*)<br />
+ **injects object constructor prototypes with the set Function, and update Function, functions optional, constructor will auto put defaults if none exist note* inject only works with `(function name(){})` type objects formats and not `(var name = function(){})` as these type functions are named as an empty string**
  
  injected ()<br />
  **returns an object of all injected objects**
