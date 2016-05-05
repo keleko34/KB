@@ -74,20 +74,24 @@ define([],function(){
           //resyncs inputs in case new ones were added to the DOM or old ones were removed
           var reSyncInputs = function(){
             var x=0,
-                i = document.getElementsByTagName('INPUT');
-            for(x=0;x<_inputs.length;x++)
+                inp = Array.prototype.slice.call(document.getElementsByTagName('INPUT'))
+                      .filter(function(k){return k.type !== 'radio' && k.type !== 'checkbox';})
+                      .concat(Array.prototype.slice.call(document.getElementsByTagName('TEXTAREA'))),
+                inc = Array.prototype.slice.call(document.getElementsByTagName('INPUT')).filter(function(k){return k.type === 'radio' || k.type === 'checkbox'});
+
+            for(x=0;x<inp.length;x++)
             {
-              if(_inputs[x].parentElement === undefined)
+              if(inp[x].kb_onkeydown === undefined)
               {
-                _inputs[x].kb_removeInputBinding();
-                _inputs.splice(x,1);
+                inp[x].kb_addInputBinding();
               }
             }
-            for(x=0;x<i.length;x++)
+
+            for(x=0;x<inc.length;x++)
             {
-              if(i[x].kb_onkeydown === undefined)
+              if(inc[x].kb_onmousedown === undefined)
               {
-                i[x].kb_addInputBinding();
+                inc[x].kb_addInputBoxBinding();
               }
             }
           }
@@ -131,6 +135,7 @@ define([],function(){
 
           //injects main prototypes for listening to dom changes
           Bind.inject(HTMLInputElement,set,update);
+          Bind.inject(HTMLTextAreaElement,set,update);
           Bind.inject(Node,set,update);
           Bind.inject(Element,set,update);
           Bind.inject(HTMLElement,set,update);
@@ -258,17 +263,37 @@ define([],function(){
               _keys = Object.keys(_proto),
               _descriptors = {},
               _onKeyDown = function(e){
-                var oldValue = this.value;
+                var isCheck = false;
+                var oldCheck = "false";
+                if(this.type === 'checkbox' || this.type === 'radio')
+                {
+                  oldCheck = this.checked;
+                  isCheck = true;
+                }
+                var oldValue = (isCheck ? (typeof this.checked === 'string' ? (this.checked === 'true' ? "on" : "off") : (this.checked ? "on" : "off")) : this.value);
                 setTimeout((function(){
-                  if(!set(this,'value',this.value,oldValue))
+                  if(isCheck && !_injected[_injectName].set(this,"checked",this.checked,oldCheck))
+                  {
+                    _descriptors["checked"].set.call(this,oldCheck);
+                  }
+                  else if(isCheck)
+                  {
+                    if(typeof _injected[_injectName].update === 'function')
+                    {
+                      _injected[_injectName].update(this,"checked",this.checked,oldValue);
+                    }
+                  }
+                  this.value = (isCheck ? (typeof this.checked === 'string' ? (this.checked === 'true' ? "on" : "off") : (this.checked ? "on" : "off")) : this.value);
+
+                  if(!_injected[_injectName].set(this,'value',this.value,oldValue))
                   {
                     _descriptors["value"].set.call(this,oldValue);
                   }
                   else
                   {
-                    if(typeof update === 'function')
+                    if(typeof _injected[_injectName].update === 'function')
                     {
-                      update(this,"value",this.value,oldValue);
+                      _injected[_injectName].update(this,"value",this.value,oldValue);
                     }
                   }
                 }).bind(this),0);
@@ -293,8 +318,20 @@ define([],function(){
               this.addEventListener('keydown',_onKeyDown);
             }
 
+            var removeInputBoxBinding = function(){
+              this.kb_onmousedown = undefined;
+              this.removeEventListener('mouseup',_onKeyDown);
+            }
+            var addInputBoxBinding = function(){
+              this.kb_onmousedown = true;
+              this.addEventListener('mouseup',_onKeyDown);
+            }
+
             Object.defineProperty(_proto,"kb_removeInputBinding",{value:removeInputBinding,configurable:true,enumerable:true});
             Object.defineProperty(_proto,"kb_addInputBinding",{value:addInputBinding,configurable:true,enumerable:true});
+
+            Object.defineProperty(_proto,"kb_removeInputBoxBinding",{value:removeInputBoxBinding,configurable:true,enumerable:true});
+            Object.defineProperty(_proto,"kb_addInputBoxBinding",{value:addInputBoxBinding,configurable:true,enumerable:true});
           }
 
 

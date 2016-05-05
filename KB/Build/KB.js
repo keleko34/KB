@@ -1,18 +1,18 @@
 var CreateKB = (function(){
 	function CreateKB(){
-        
+
         //holds all preset listeners per attribute eg: {innerHTML:[func,func,func]}
         var _attrListeners = {}
         //holds all postset listeners per attribute eg: {innerHTML:[func,func,func]}
-          , _attrUpdateListeners = {} 
+          , _attrUpdateListeners = {}
         //holds all injected objects and thier descriptors, functions and set and update functions eg: {HTMLElement:{obj:HTMLElement,proto:HTMLElement.prototype,descriptors:{},functions:{},set:function(){},update:function(){}}}
-          , _injected = {} 
+          , _injected = {}
         //holds all synced inputs for checking value updates
-          , _inputs = [] 
+          , _inputs = []
         //used in all for loops
-          , x; 
+          , x;
 
-      
+
         /*** MAIN CONSTRUCTOR ***/
         function Bind()
         {
@@ -27,7 +27,7 @@ var CreateKB = (function(){
             this.arguments = args;
             this.action = action;
           }
-          
+
           //the set function that runs on all changes
           var set = function(el,prop,val,ret,args){
             var e = new changeEvent(el,prop,val,ret,args);
@@ -74,24 +74,28 @@ var CreateKB = (function(){
           //resyncs inputs in case new ones were added to the DOM or old ones were removed
           var reSyncInputs = function(){
             var x=0,
-                i = document.getElementsByTagName('INPUT');
-            for(x=0;x<_inputs.length;x++)
+                inp = Array.prototype.slice.call(document.getElementsByTagName('INPUT'))
+                      .filter(function(k){return k.type !== 'radio' && k.type !== 'checkbox';})
+                      .concat(Array.prototype.slice.call(document.getElementsByTagName('TEXTAREA'))),
+                inc = Array.prototype.slice.call(document.getElementsByTagName('INPUT')).filter(function(k){return k.type === 'radio' || k.type === 'checkbox'});
+
+            for(x=0;x<inp.length;x++)
             {
-              if(_inputs[x].parentElement === undefined)
+              if(inp[x].kb_onkeydown === undefined)
               {
-                _inputs[x].kb_removeInputBinding();
-                _inputs.splice(x,1);
+                inp[x].kb_addInputBinding();
               }
             }
-            for(x=0;x<i.length;x++)
+
+            for(x=0;x<inc.length;x++)
             {
-              if(i[x].kb_onkeydown === undefined)
+              if(inc[x].kb_onmousedown === undefined)
               {
-                i[x].kb_addInputBinding();
+                inc[x].kb_addInputBoxBinding();
               }
             }
           }
-          
+
           //checks attributes inside of setAttribute and removeAttribute
           var checkAttributes = function(e)
           {
@@ -112,7 +116,7 @@ var CreateKB = (function(){
               }
             }
           }
-          
+
           var checkUpdateAttributes = function(e)
           {
             var et = new changeEvent(e.target,e.arguments[0],(e.attr === 'setAttribute' ? e.arguments[1] : ""),e.target.getAttribute(e.arguments[0]),(e.attr === 'setAttribute' ? [e.arguments[1]] : [""]));
@@ -131,13 +135,14 @@ var CreateKB = (function(){
 
           //injects main prototypes for listening to dom changes
           Bind.inject(HTMLInputElement,set,update);
+          Bind.inject(HTMLTextAreaElement,set,update);
           Bind.inject(Node,set,update);
           Bind.inject(Element,set,update);
           Bind.inject(HTMLElement,set,update);
           Bind.inject(Document,set,update);
-          
+
           var injectedKeys = Object.keys(_injected);
-          
+
           //checks if any objects were injected without a set, if so the default set and get are added
           for(x=0;x<injectedKeys.length;x++)
           {
@@ -146,7 +151,7 @@ var CreateKB = (function(){
               Bind.inject(_injected[injectedKeys[x]].obj,set,update);
             }
           }
-          
+
           Object.keys(_injected).forEach(function(k,i){});
 
           //for keeping binds with inputs
@@ -157,14 +162,14 @@ var CreateKB = (function(){
           Bind.addAttrUpdateListener('innerText',reSyncInputs);
           Bind.addAttrUpdateListener('outerText',reSyncInputs);
           Bind.addAttrUpdateListener('textContent',reSyncInputs);
-          
+
           //allows for html attribute changes to be listened to just like properties
           Bind.addAttrListener('setAttribute',checkAttributes);
           Bind.addAttrListener('removeAttribute',checkAttributes);
-          
+
           Bind.addAttrUpdateListener('setAttribute',checkUpdateAttributes);
           Bind.addAttrUpdateListener('removeAttribute',checkUpdateAttributes);
-          
+
           //initially adds inputs for watching
           reSyncInputs();
         }
@@ -180,9 +185,9 @@ var CreateKB = (function(){
           }
           _injected[_injectName].set = (set !== undefined ? set : _injected[_injectName].set);
           _injected[_injectName].update = (update !== undefined ? update : _injected[_injectName].update);
-          
+
           _injected[_injectName].descriptors[key] = _descriptor;
-          
+
           if(_descriptor.set !== undefined && _descriptor.configurable)
           {
               Object.defineProperty(_proto,key,{
@@ -248,9 +253,9 @@ var CreateKB = (function(){
           });
         }
         }
-      
+
         /*** Inject Method ***
-         -- injects an objects prototypes to allow for property event listeners 
+         -- injects an objects prototypes to allow for property event listeners
          */
         Bind.inject = function(obj,set,update){
           var _proto = obj.prototype,
@@ -258,29 +263,49 @@ var CreateKB = (function(){
               _keys = Object.keys(_proto),
               _descriptors = {},
               _onKeyDown = function(e){
-                var oldValue = this.value;
+                var isCheck = false;
+                var oldCheck = "false";
+                if(this.type === 'checkbox' || this.type === 'radio')
+                {
+                  oldCheck = this.checked;
+                  isCheck = true;
+                }
+                var oldValue = (isCheck ? (typeof this.checked === 'string' ? (this.checked === 'true' ? "on" : "off") : (this.checked ? "on" : "off")) : this.value);
                 setTimeout((function(){
-                  if(!set(this,'value',this.value,oldValue))
+                  if(isCheck && !_injected[_injectName].set(this,"checked",this.checked,oldCheck))
+                  {
+                    _descriptors["checked"].set.call(this,oldCheck);
+                  }
+                  else if(isCheck)
+                  {
+                    if(typeof _injected[_injectName].update === 'function')
+                    {
+                      _injected[_injectName].update(this,"checked",this.checked,oldValue);
+                    }
+                  }
+                  this.value = (isCheck ? (typeof this.checked === 'string' ? (this.checked === 'true' ? "on" : "off") : (this.checked ? "on" : "off")) : this.value);
+
+                  if(!_injected[_injectName].set(this,'value',this.value,oldValue))
                   {
                     _descriptors["value"].set.call(this,oldValue);
                   }
                   else
                   {
-                    if(typeof update === 'function')
+                    if(typeof _injected[_injectName].update === 'function')
                     {
-                      update(this,"value",this.value,oldValue);
+                      _injected[_injectName].update(this,"value",this.value,oldValue);
                     }
                   }
                 }).bind(this),0);
               }
-          
+
           if(_injected[_injectName] === undefined)
           {
             _injected[_injectName] = {obj:obj,proto:_proto,descriptors:{},set:undefined,update:undefined};
           }
           _injected[_injectName].set = set;
           _injected[_injectName].update = update;
-          
+
 
           if(_keys.indexOf("value") > -1)
           {
@@ -293,8 +318,20 @@ var CreateKB = (function(){
               this.addEventListener('keydown',_onKeyDown);
             }
 
+            var removeInputBoxBinding = function(){
+              this.kb_onmousedown = undefined;
+              this.removeEventListener('mouseup',_onKeyDown);
+            }
+            var addInputBoxBinding = function(){
+              this.kb_onmousedown = true;
+              this.addEventListener('mouseup',_onKeyDown);
+            }
+
             Object.defineProperty(_proto,"kb_removeInputBinding",{value:removeInputBinding,configurable:true,enumerable:true});
             Object.defineProperty(_proto,"kb_addInputBinding",{value:addInputBinding,configurable:true,enumerable:true});
+
+            Object.defineProperty(_proto,"kb_removeInputBoxBinding",{value:removeInputBoxBinding,configurable:true,enumerable:true});
+            Object.defineProperty(_proto,"kb_addInputBoxBinding",{value:addInputBoxBinding,configurable:true,enumerable:true});
           }
 
 

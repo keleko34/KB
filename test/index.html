@@ -4,7 +4,11 @@
     <title>Testing</title>
   </head>
   <body>
+    <h1 id="testDiv">Test Title</h1>
     <input id="testInput" type="text" />
+    <input id="testInputBox" type="checkbox" />
+    <input id="testInputRadio" type="radio" />
+    <textarea id="testTextarea"></textarea>
     <div id="testDisplay"></div>
     <script type="text/javascript" src="../KB/Build/KB.js"></script>
     <script type="text/javascript">
@@ -18,6 +22,9 @@
           return;
         }
         testDisplay.innerHTML = e.value;
+      })
+      .addAttrListener("checked",function(e){
+        console.log(e);
       })
       .addAttrListener('appendChild',function(e){
         console.log(e);
