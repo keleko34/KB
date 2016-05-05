@@ -147,10 +147,10 @@ This library allows for adding attribute/property change listeners on the front 
  injectedPrototypes ()<br />
  **returns an object of all injected objects**
  
-###### Contributing
+#### Contributing
 
-**Build Tool** *Gulp*
+###### Build Tool *Gulp*
 
-NPM: `npm i`
-CLI: `Gulp Build`
+NPM: `npm i`<br />
+CLI: `Gulp Build`<br />
 Component `KB`
