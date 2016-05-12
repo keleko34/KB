@@ -147,6 +147,12 @@ This library allows for adding attribute/property change listeners on the front 
  injectedPrototypes ()<br />
  **returns an object of all injected objects**
  
+ getAttrListeners ()<br />
+ **returns an object of all pre listeners**
+ 
+ getAttrUpdateListeners ()<br />
+ **returns an object of all post listeners**
+ 
 #### Contributing
 
 ###### Build Tool *Gulp*

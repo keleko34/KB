@@ -455,6 +455,22 @@ define([],function(){
           }
         }
 
+        /*** Pre Attribute Listeners ***
+         -- returns the object of all listeners
+         */
+        Bind.getAttrListeners = function()
+        {
+          return _attrListeners;
+        }
+
+        /*** Post Attribute Listeners ***
+         -- returns the object of all listeners
+         */
+        Bind.getAttrUpdateListeners = function()
+        {
+          return _attrUpdateListeners;
+        }
+
         /*** Remove Pre Set Attribute Listener ***
          -- removes a property event listener from the desired property
          */

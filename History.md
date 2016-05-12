@@ -1,5 +1,9 @@
 # History
 
+## 0.2.2 / 2016-05-12
+
+- [Update] allow to get and see the listener objects
+
 ## 0.1.8 / 2016-05-05
 
 - [Update] listeners can be applied directly to individual elements now rather than just global
