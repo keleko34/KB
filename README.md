@@ -63,6 +63,11 @@ This library allows for adding attribute/property change listeners on the front 
       }
     });
     
+    /* Listens to changes on anything, globally all changes */
+    kb.addAttrListener('*',function(e){
+      console.log(e);
+    });
+    
     kb.call();
     
 ###### Use With DOM *Element*
