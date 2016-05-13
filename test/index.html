@@ -44,6 +44,9 @@
         {
           e.preventDefault();
         }
+      })
+      .addAttrListener("*",function(e){
+        console.log(e);
       });
 
       function myObject(){};

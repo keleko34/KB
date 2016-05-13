@@ -24,80 +24,75 @@ var CreateKB = (function(){
             }
         //the set function that runs on all changes
           , _set = function(el,prop,val,ret,args){
-              var e = new _changeEvent(el,prop,val,ret,args);
-              var ret = true;
+              var e = new _changeEvent(el,prop,val,ret,args),
+                  all = "*";
 
-              if(_attrListeners[prop] !== undefined)
+              if(_attrListeners[all] !== undefined)
               {
-                for(x=0;x<_attrListeners[prop].length;x+=1)
+                loop:for(x=0;x<_attrListeners[all].length;x+=1)
+                {
+                  _attrListeners[all][x].call(el,e);
+                  if(e._stopPropogation) break loop;
+                }
+              }
+
+              if(_attrListeners[prop] !== undefined && !e._stopPropogation)
+              {
+                loop:for(x=0;x<_attrListeners[prop].length;x+=1)
                 {
                   _attrListeners[prop][x].call(el,e);
-                  if(e._stopPropogation)
-                  {
-                    return ret;
-                  }
-                  if(e._preventDefault)
-                  {
-                    ret = false;
-                  }
+                  if(e._stopPropogation) break loop;
                 }
               }
 
-              if(el.kb_attrListeners !== undefined && el.kb_attrListeners[prop] !== undefined)
+              if(el.kb_attrListeners !== undefined && el.kb_attrListeners[prop] !== undefined && !e._stopPropogation)
               {
-                for(x=0;x<el.kb_attrListeners[prop].length;x+=1)
+                loop:for(x=0;x<el.kb_attrListeners[prop].length;x+=1)
                 {
                   el.kb_attrListeners[prop][x].call(el,e);
-                  if(e._stopPropogation)
-                  {
-                    return ret;
-                  }
-                  if(e._preventDefault)
-                  {
-                    ret = false;
-                  }
+                  if(e._stopPropogation) break loop;
                 }
               }
 
-              return ret;
+              if(e._preventDefault) return false;
+
+              return true;
             }
         //the update function that runs on all changes
           , _update = function(el,prop,val,ret,args,action){
-            var e = new _changeEvent(el,prop,val,ret,args,action);
-            var ret = true;
+            var e = new _changeEvent(el,prop,val,ret,args,action),
+                all = "*";
+
+            if(_attrUpdateListeners[all] !== undefined)
+            {
+              loop:for(var x=0;x<_attrUpdateListeners[all].length;x+=1)
+              {
+                _attrUpdateListeners[all][x].call(el,e);
+                if(e._stopPropogation) break loop;
+              }
+            }
+
             if(_attrUpdateListeners[prop] !== undefined)
             {
-              for(var x=0;x<_attrUpdateListeners[prop].length;x+=1)
+              loop:for(var x=0;x<_attrUpdateListeners[prop].length;x+=1)
               {
                 _attrUpdateListeners[prop][x].call(el,e);
-                if(e._stopPropogation)
-                {
-                  return ret;
-                }
-                if(e._preventDefault)
-                {
-                  ret = false;
-                }
+                if(e._stopPropogation) break loop;
               }
             }
 
             if(el.kb_attrUpdateListeners !== undefined && el.kb_attrUpdateListeners[prop] !== undefined)
             {
-              for(var x=0;x<el.kb_attrUpdateListeners[prop].length;x+=1)
+              loop:for(var x=0;x<el.kb_attrUpdateListeners[prop].length;x+=1)
               {
                 el.kb_attrUpdateListeners[prop][x].call(el,e);
-                if(e._stopPropogation)
-                {
-                  return ret;
-                }
-                if(e._preventDefault)
-                {
-                  ret = false;
-                }
+                if(e._stopPropogation) break loop;
               }
             }
 
-            return ret;
+            if(e._preventDefault) return false;
+
+            return true;
           }
 
 
