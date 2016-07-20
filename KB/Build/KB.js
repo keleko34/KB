@@ -45,11 +45,11 @@ var CreateKB = (function(){
                 }
               }
 
-              if(el.kb_attrListeners !== undefined && el.kb_attrListeners[prop] !== undefined && !e._stopPropogation)
+              if(el.kb_attrListeners !== undefined && el.kb_attrListeners()[prop] !== undefined && !e._stopPropogation)
               {
-                loop:for(x=0;x<el.kb_attrListeners[prop].length;x+=1)
+                loop:for(x=0;x<el.kb_attrListeners()[prop].length;x+=1)
                 {
-                  el.kb_attrListeners[prop][x].call(el,e);
+                  el.kb_attrListeners()[prop][x].call(el,e);
                   if(e._stopPropogation) break loop;
                 }
               }
@@ -203,13 +203,23 @@ var CreateKB = (function(){
 
           if(_proto.addAttrListener === undefined && _proto.kb_attrListeners === undefined)
           {
-            _proto.kb_attrListeners = {};
+            _proto.kb_attrListeners = function(){
+              if(this._kb_attrListeners === undefined){
+                this._kb_attrListeners = {};
+              }
+              return this._kb_attrListeners;
+            };
             _proto.addAttrListener = Bind.addAttrListener;
             _proto.removeAttrListener = Bind.removeAttrListener;
           }
           if(_proto.addAttrUpdateListener === undefined && _proto.kb_attrUpdateListeners === undefined)
           {
-            _proto.kb_attrUpdateListeners = {};
+            _proto.kb_attrUpdateListeners = function(){
+              if(this._kb_attrUpdateListeners === undefined){
+                this._kb_attrUpdateListeners = {};
+              }
+              return this._kb_attrUpdateListeners;
+            };
             _proto.addAttrUpdateListener = Bind.addAttrUpdateListener;
             _proto.removeAttrUpdateListener = Bind.removeAttrUpdateListener;
           }
@@ -395,13 +405,13 @@ var CreateKB = (function(){
         {
           if(this.toString() !== Bind.toString())
           {
-            if(this.kb_attrListeners[attr] === undefined)
+            if(this.kb_attrListeners()[attr] === undefined)
             {
-              this.kb_attrListeners[attr] = [];
+              this.kb_attrListeners()[attr] = [];
             }
             if(typeof func === 'function')
             {
-              this.kb_attrListeners[attr].push(func);
+              this.kb_attrListeners()[attr].push(func);
             }
             return this;
           }
@@ -426,13 +436,13 @@ var CreateKB = (function(){
         {
           if(this.toString() !== Bind.toString())
           {
-            if(this.kb_attrUpdateListeners[attr] === undefined)
+            if(this.kb_attrUpdateListeners()[attr] === undefined)
             {
-              this.kb_attrUpdateListeners[attr] = [];
+              this.kb_attrUpdateListeners()[attr] = [];
             }
             if(typeof func === 'function')
             {
-              this.kb_attrUpdateListeners[attr].push(func);
+              this.kb_attrUpdateListeners()[attr].push(func);
             }
             return this;
           }
@@ -473,13 +483,13 @@ var CreateKB = (function(){
         {
           if(this.toString() !== Bind.toString())
           {
-            if(this.kb_attrListeners !== undefined && this.kb_attrListeners[attr] !== undefined && typeof func === 'function')
+            if(this.kb_attrListeners !== undefined && this.kb_attrListeners()[attr] !== undefined && typeof func === 'function')
             {
-              for(var x=0;x<this.kb_attrListeners[attr].length;x+=1)
+              for(var x=0;x<this.kb_attrListeners()[attr].length;x+=1)
               {
-                if(this.kb_attrListeners[attr][x].toString() === func.toString())
+                if(this.kb_attrListeners()[attr][x].toString() === func.toString())
                 {
-                  this.kb_attrListeners[attr].splice(x,1);
+                  this.kb_attrListeners()[attr].splice(x,1);
                 }
               }
             }
@@ -508,13 +518,13 @@ var CreateKB = (function(){
         {
           if(this.toString() !== Bind.toString())
           {
-            if(this.kb_attrUpdateListeners !== undefined && this.kb_attrUpdateListeners[attr] !== undefined && typeof func === 'function')
+            if(this.kb_attrUpdateListeners !== undefined && this.kb_attrUpdateListeners()[attr] !== undefined && typeof func === 'function')
             {
-              for(var x=0;x<this.kb_attrUpdateListeners[attr].length;x+=1)
+              for(var x=0;x<this.kb_attrUpdateListeners()[attr].length;x+=1)
               {
-                if(this.kb_attrUpdateListeners[attr][x].toString() === func.toString())
+                if(this.kb_attrUpdateListeners()[attr][x].toString() === func.toString())
                 {
-                  this.kb_attrUpdateListeners[attr].splice(x,1);
+                  this.kb_attrUpdateListeners()[attr].splice(x,1);
                 }
               }
             }
