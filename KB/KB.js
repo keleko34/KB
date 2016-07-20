@@ -549,7 +549,7 @@ define([],function(){
     if (typeof define === "function" && define.amd)
     {
       define('KB',CreateKB); //global KM define in browser
-      define([],CreateKB); //define if file refrenced
+      define([],function(){return CreateKB;}); //define if file refrenced
     }
     else if (typeof module === "object" && module.exports)
     {
