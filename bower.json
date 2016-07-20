@@ -1,6 +1,7 @@
 {
   "name": "KB",
   "description": "A Dom Attributes Binding and Event Listener Library",
+  "version":"0.2.4",
   "main": "index",
   "authors": [
     "Keleko34"
