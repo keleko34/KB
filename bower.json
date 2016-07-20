@@ -1,0 +1,29 @@
+{
+  "name": "KB",
+  "description": "A Dom Attributes Binding and Event Listener Library",
+  "main": "index",
+  "authors": [
+    "Keleko34"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "DOM",
+    "Binding",
+    "Dom",
+    "Binding",
+    "Attributes",
+    "Attribute",
+    "Events",
+    "Attribute",
+    "Event",
+    "Listeners"
+  ],
+  "homepage": "https://github.com/keleko34/KB",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
