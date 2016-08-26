@@ -100,13 +100,57 @@ define([],function(){
         function Bind()
         {
 
-          //resyncs inputs in case new ones were added to the DOM or old ones were removed
-          var reSyncInputs = function(){
+          //resyncs inputs and styles in case new ones were added to the DOM or old ones were removed
+          function reSync(e)
+          {
+            if(e.attr === 'outerHTML' || e.attr === 'outerText')
+            {
+              e.target = e.target.parentElement;
+            }
             var x=0,
-                inp = Array.prototype.slice.call(document.getElementsByTagName('INPUT'))
+                extraInput = (e.attr === 'appendChild' && e.arguments[0].tagName === 'INPUT' ? e.arguments[0] : []),
+                extraTextArea = (e.attr === 'appendChild' && e.arguments[0].tagName === 'TEXTAREA' ? e.arguments[0] : []),
+                inputs = e.target.getElementsByTagName('INPUT'),
+                inp = Array.prototype.slice.call(inputs).concat(extraInput)
+                      .filter(function(k){return k.type !== 'radio' && k.type !== 'checkbox';})
+                      .concat(Array.prototype.slice.call(e.target.getElementsByTagName('TEXTAREA')).concat(extraTextArea)),
+                inc = Array.prototype.slice.call(inputs).concat(extraInput).filter(function(k){return k.type === 'radio' || k.type === 'checkbox'}),
+                allStyles = Object.getOwnPropertyNames(e.target.style),
+                all = Array.prototype.slice.call(e.target.querySelectorAll('*')).concat((e.attr === 'appendChild' ? [e.arguments[0]] : []));
+
+            for(x=0;x<inp.length;x++)
+            {
+              if(inp[x].kb_onkeydown === undefined)
+              {
+                inp[x].kb_addInputBinding();
+              }
+            }
+
+            for(x=0;x<inc.length;x++)
+            {
+              if(inc[x].kb_onmousedown === undefined)
+              {
+                inc[x].kb_addInputBoxBinding();
+              }
+            }
+            
+            for(x=0;x<all.length;x++)
+            {
+              for(var i=0;i<allStyles.length;i++)
+              {
+                Bind.injectStyle(all[x],allStyles[i],_set,_update);
+              }
+            }
+          }
+          
+          function syncInputs()
+          {
+            var x=0,
+                inputs = document.getElementsByTagName('INPUT'),
+                inp = Array.prototype.slice.call(inputs)
                       .filter(function(k){return k.type !== 'radio' && k.type !== 'checkbox';})
                       .concat(Array.prototype.slice.call(document.getElementsByTagName('TEXTAREA'))),
-                inc = Array.prototype.slice.call(document.getElementsByTagName('INPUT')).filter(function(k){return k.type === 'radio' || k.type === 'checkbox'});
+                inc = Array.prototype.slice.call(inputs).filter(function(k){return k.type === 'radio' || k.type === 'checkbox'});
 
             for(x=0;x<inp.length;x++)
             {
@@ -124,9 +168,22 @@ define([],function(){
               }
             }
           }
+          
+          function syncStyles()
+          {
+            var allStyles = Object.getOwnPropertyNames(document.all[0].style);
+            for(var x=0;x<document.all.length;x++)
+            {
+              for(var i=0;i<allStyles.length;i++)
+              {
+                Bind.injectStyle(document.all[x],allStyles[i],_set,_update);
+              }
+            }
+          }
+          
 
           //checks attributes inside of setAttribute and removeAttribute
-          var checkAttributes = function(e)
+          function checkAttributes(e)
           {
             var et = new _changeEvent(e.target,e.arguments[0],(e.attr === 'setAttribute' ? e.arguments[1] : ""),e.target.getAttribute(e.arguments[0]),(e.attr === 'setAttribute' ? [e.arguments[1]] : [""]));
             if(_attrListeners[et.attr] !== undefined)
@@ -146,7 +203,7 @@ define([],function(){
             }
           }
 
-          var checkUpdateAttributes = function(e)
+          function checkUpdateAttributes(e)
           {
             var et = new _changeEvent(e.target,e.arguments[0],(e.attr === 'setAttribute' ? e.arguments[1] : ""),e.target.getAttribute(e.arguments[0]),(e.attr === 'setAttribute' ? [e.arguments[1]] : [""]));
             if(_attrUpdateListeners[et.attr] !== undefined)
@@ -174,13 +231,13 @@ define([],function(){
           }
 
           //for keeping binds with inputs
-          Bind.addAttrUpdateListener('appendChild',reSyncInputs);
-          Bind.addAttrUpdateListener('removeChild',reSyncInputs);
-          Bind.addAttrUpdateListener('innerHTML',reSyncInputs);
-          Bind.addAttrUpdateListener('outerHTML',reSyncInputs);
-          Bind.addAttrUpdateListener('innerText',reSyncInputs);
-          Bind.addAttrUpdateListener('outerText',reSyncInputs);
-          Bind.addAttrUpdateListener('textContent',reSyncInputs);
+          Bind.addAttrUpdateListener('appendChild',reSync);
+          Bind.addAttrUpdateListener('removeChild',reSync);
+          Bind.addAttrUpdateListener('innerHTML',reSync);
+          Bind.addAttrUpdateListener('outerHTML',reSync);
+          Bind.addAttrUpdateListener('innerText',reSync);
+          Bind.addAttrUpdateListener('outerText',reSync);
+          Bind.addAttrUpdateListener('textContent',reSync);
 
           //allows for html attribute changes to be listened to just like properties
           Bind.addAttrListener('setAttribute',checkAttributes);
@@ -188,9 +245,12 @@ define([],function(){
 
           Bind.addAttrUpdateListener('setAttribute',checkUpdateAttributes);
           Bind.addAttrUpdateListener('removeAttribute',checkUpdateAttributes);
-
+          
+          //initially adds all styles for watching
+          syncStyles();
+          
           //initially adds inputs for watching
-          reSyncInputs();
+          syncInputs();
         }
 
         Bind.injectPrototypeProperty = function(obj,key,set,update,_injectName)
@@ -384,6 +444,47 @@ define([],function(){
               {
                 Bind.injectPrototypeProperty(obj,_keys[x],null,null,_injectName);
               }
+          }
+          return Bind;
+        }
+        
+        Bind.injectStyle = function(el,key,set,update)
+        {
+          var _descriptor = Object.getOwnPropertyDescriptor(el.style,key),
+              _proto = el.style;
+          
+          if(el.style.kb_bind === undefined)
+          {
+            el.style.kb_bind = {obj:el,proto:_proto,descriptors:{},set:undefined,update:undefined};
+          }
+          el.style.kb_bind.set = (set ? set : _injected[_injectName].set);
+          el.style.kb_bind.update = (update ? update : _injected[_injectName].update);
+
+          el.style.kb_bind.descriptors[key] = _descriptor;
+          
+          if(_descriptor.value !== undefined && _descriptor.configurable)
+          {
+            Object.defineProperty(_proto,key,{
+                get:function()
+                {
+                  return _descriptor.value;
+                },
+                set:function(v)
+                {
+                    var oldValue = _descriptor.value;
+                    if(typeof el.style.kb_bind.set == 'function' && el.style.kb_bind.set(el,key,v,oldValue))
+                    {
+                      _descriptor.value = v;
+                      el.style.setProperty(key.replace(/([A-Z])/g, "-$1").replace('webkit','-webkit'),v);
+                    }
+                    if(typeof el.style.kb_bind.update === 'function')
+                    {
+                      el.style.kb_bind.update(el,key,v,oldValue);
+                    }
+                },
+                enumerable:true,
+                configurable:true
+            });
           }
           return Bind;
         }
