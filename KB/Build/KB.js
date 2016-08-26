@@ -173,8 +173,6 @@ var CreateKB = (function(){
             }
           }
 
-          Object.keys(_injected).forEach(function(k,i){});
-
           //for keeping binds with inputs
           Bind.addAttrUpdateListener('appendChild',reSyncInputs);
           Bind.addAttrUpdateListener('removeChild',reSyncInputs);
@@ -195,11 +193,11 @@ var CreateKB = (function(){
           reSyncInputs();
         }
 
-        Bind.injectPrototypeProperty = function(obj,key,set,update)
+        Bind.injectPrototypeProperty = function(obj,key,set,update,_injectName)
         {
           var _proto = obj.prototype,
               _descriptor = Object.getOwnPropertyDescriptor(_proto,key),
-              _injectName = obj.toString().split(/\s+/)[1].split('{')[0].replace('()','');
+              _injectName = (_injectName || obj.toString().split(/\s+/)[1].split('{')[0].replace('()',''));
 
           if(_proto.addAttrListener === undefined && _proto.kb_attrListeners === undefined)
           {
@@ -228,8 +226,8 @@ var CreateKB = (function(){
           {
             _injected[_injectName] = {obj:obj,proto:_proto,descriptors:{},set:undefined,update:undefined};
           }
-          _injected[_injectName].set = (set !== undefined ? set : _injected[_injectName].set);
-          _injected[_injectName].update = (update !== undefined ? update : _injected[_injectName].update);
+          _injected[_injectName].set = (set ? set : _injected[_injectName].set);
+          _injected[_injectName].update = (update ? update : _injected[_injectName].update);
 
           _injected[_injectName].descriptors[key] = _descriptor;
 
@@ -305,7 +303,7 @@ var CreateKB = (function(){
         Bind.injectPrototypes = function(obj,set,update){
           var _proto = obj.prototype,
               _injectName = obj.toString().split(/\s+/)[1].split('{')[0].replace('()',''),
-              _keys = Object.keys(_proto),
+              _keys = Object.getOwnPropertyNames(_proto),
               _descriptors = {},
               _onKeyDown = function(e){
                 var isCheck = false;
@@ -348,8 +346,8 @@ var CreateKB = (function(){
           {
             _injected[_injectName] = {obj:obj,proto:_proto,descriptors:{},set:undefined,update:undefined};
           }
-          _injected[_injectName].set = set;
-          _injected[_injectName].update = update;
+          _injected[_injectName].set = (set || _set);
+          _injected[_injectName].update = (update || _update);
 
 
           if(_keys.indexOf("value") > -1)
@@ -384,7 +382,7 @@ var CreateKB = (function(){
           {
               if(_injected[_injectName].descriptors[_keys[x]] === undefined)
               {
-                Bind.injectPrototypeProperty(obj,_keys[x]);
+                Bind.injectPrototypeProperty(obj,_keys[x],null,null,_injectName);
               }
           }
           return Bind;
