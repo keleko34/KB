@@ -118,7 +118,7 @@ This library allows for adding attribute/property change listeners on the front 
     
     Logs: "first # 10 second # 20"
 
-###### NEW! use with style changes
+###### NEW! Use With Style Changes
 
     var kb = CreateKB();
     
@@ -134,7 +134,25 @@ This library allows for adding attribute/property change listeners on the front 
        if(e.value === "#000000") e.value = "#F00";
     })
     
-    kb.call();;
+    kb.call();
+    
+###### NEW! Listen To Changes On Child Elements
+
+    var kb = CreateKB();
+    
+    var myNode = document.querySelector('#myNode')
+    
+    /* prevent background color changes on all child elements */
+    myNode.addChildAttrListener('color',function(e){
+      e.preventDefault();
+    });
+    
+    /* detect any text changes on child nodes */
+    myNode.addChildAttrListener('inerHTML',function(e){
+      console.log("text changed!",e.child,e.value);
+    });
+    
+    kb.call();
 
 ###### Event Properties
 
@@ -146,17 +164,24 @@ This library allows for adding attribute/property change listeners on the front 
 - target (DOM Node) the node that had the change happen
 - arguments (Argument Array) if attr is a function this the arguments that was passed to the function
 - action: (Any) if attr is a function this is the outcome of that function *Post Only*
+- child: (DOM Node) the child node that fired a parent listener
 
 ###### Methods
 
  addAttrListener (*String 'Property',Function Callback*)<br />
  **Adds an event to the event chain for the change of that attribute** *Pre Value Set*
  
+  addChildAttrListener (*String 'Property',Function Callback*)<br />
+ **Adds an event to the event chain for the change of that attribute on all child elements note* Avaliable from element only** *Pre Value Set*
+ 
  removeAttrListener (*String 'Property',Function Callback*)<br />
  **Removes event from the event chain that matches** *Pre Value Set*
  
  addAttrUpdateListener (*String 'Property',Function Callback*)<br />
  **Adds an event to the event chain for the post change of that attribute** *Post Value Set*
+ 
+ addChildAttrUpdateListener (*String 'Property',Function Callback*)<br />
+ **Adds an event to the event chain for the post change of that attribute on all child elements note* Avaliable from element only** *Post Value Set*
  
  removeAttrUpdateListener (*String 'Property',Function Callback*)<br />
  **Removes event from the event chain that matches in the post events** *Post Value Set*
@@ -168,7 +193,7 @@ This library allows for adding attribute/property change listeners on the front 
  **injects object constructor prototypes with the set Function, and update Function, functions optional, constructor will auto put defaults if none exist note* inject only works with `(function name(){})` type objects formats and not `(var name = function(){})` as these type functions are named as an empty string**
  
  injectStyle (*HTMLElement Element,String 'style property', Function set, Function update*)<br />
- **injects a single style property on an element with the set Function, and update Function, functions optional, constructor will auto put defaults if none exist **
+ **injects a single style property on an element with the set Function, and update Function, functions optional, constructor will auto put defaults if none exist**
  
  injectedPrototypes ()<br />
  **returns an object of all injected objects**

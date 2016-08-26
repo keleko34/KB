@@ -11,6 +11,20 @@ define([],function(){
           , _inputs = []
         //used in all for loops
           , x
+        // used in all inner loops
+          , i
+        //travels up the dom return back all parents with child listeners
+          , getParents = function(el,attr,update){
+            var parents = [];
+              while(el)
+              {
+                el = el.parentElement;
+                if(el && el[(update ? "kb_childAttrUpdateListeners" : "kb_childAttrListeners")]()[attr] !== undefined){
+                  parents.push(el);
+                }
+              }
+              return parents;
+            }
         //the base event object that is passed to every listeners upon change
           , _changeEvent = function(el,attr,value,oldValue,args,action){
               this.stopPropagation = function(){this._stopPropogation = true;};
@@ -21,11 +35,13 @@ define([],function(){
               this.attr = attr;
               this.arguments = args;
               this.action = action;
+              this.child = undefined;
             }
         //the set function that runs on all changes
           , _set = function(el,prop,val,ret,args){
               var e = new _changeEvent(el,prop,val,ret,args),
-                  all = "*";
+                  all = "*",
+                  parents = getParents(el,prop);
 
               if(_attrListeners[all] !== undefined)
               {
@@ -53,6 +69,19 @@ define([],function(){
                   if(e._stopPropogation) break loop;
                 }
               }
+            
+              if(parents.length > 0)
+              {
+                parentloop:for(x=0;x<parents.length;x++){
+                  loop:for(i=0;i<parents[x].kb_childAttrListeners()[prop].length;i++)
+                  {
+                    e.child = el;
+                    e.target = parents[x];
+                    parents[x].kb_childAttrListeners()[prop][i].call(parents[x],e);
+                    if(e._stopPropogation) break loop;
+                  }
+                }  
+              }
 
               if(e._preventDefault) return false;
 
@@ -61,7 +90,8 @@ define([],function(){
         //the update function that runs on all changes
           , _update = function(el,prop,val,ret,args,action){
             var e = new _changeEvent(el,prop,val,ret,args,action),
-                all = "*";
+                all = "*",
+                parents = getParents(el,prop,true);
 
             if(_attrUpdateListeners[all] !== undefined)
             {
@@ -88,6 +118,19 @@ define([],function(){
                 el.kb_attrUpdateListeners[prop][x].call(el,e);
                 if(e._stopPropogation) break loop;
               }
+            }
+            
+            if(parents.length > 0)
+            {
+              parentloop:for(x=0;x<parents.length;x++){
+                loop:for(i=0;i<parents[x].kb_childAttrUpdateListeners()[prop].length;i++)
+                {
+                  e.child = el;
+                  e.target = parents[x];
+                  parents[x].kb_childAttrUpdateListeners()[prop][i].call(parent[x],e);
+                  if(e._stopPropogation) break loop;
+                }
+              }  
             }
 
             if(e._preventDefault) return false;
@@ -270,6 +313,21 @@ define([],function(){
             _proto.addAttrListener = Bind.addAttrListener;
             _proto.removeAttrListener = Bind.removeAttrListener;
           }
+          if(_proto.hasOwnProperty('children') &&  _proto.addChildAttrListener === undefined && _proto.kb_childAttrListeners === undefined)
+          {
+            _proto.kb_childAttrListeners = function(){
+              if(this._kb_childAttrListeners === undefined){
+                this._kb_childAttrListeners = {};
+              }
+              return this._kb_childAttrListeners;
+            };
+
+            _proto.addChildAttrListener = addChildAttrListener;
+            _proto.getchildAttrListeners = function()
+            {
+              return this.kb_childAttrListeners();
+            }
+          }
           if(_proto.addAttrUpdateListener === undefined && _proto.kb_attrUpdateListeners === undefined)
           {
             _proto.kb_attrUpdateListeners = function(){
@@ -280,6 +338,22 @@ define([],function(){
             };
             _proto.addAttrUpdateListener = Bind.addAttrUpdateListener;
             _proto.removeAttrUpdateListener = Bind.removeAttrUpdateListener;
+            
+          }
+          if(_proto.hasOwnProperty('children') &&  _proto.addChildAttrUpdateListener === undefined && _proto.kb_childAttrUpdateListeners === undefined)
+          {
+            _proto.kb_childAttrUpdateListeners = function(){
+              if(this._kb_childAttrUpdateListeners === undefined){
+                this._kb_childAttrUpdateListeners = {};
+              }
+              return this._kb_childAttrUpdateListeners;
+            };
+
+            _proto.addChildAttrUpdateListener = addChildAttrUpdateListener;
+            _proto.getchildAttrUpdateListeners = function()
+            {
+              return this.kb_childAttrUpdateListeners();
+            }
           }
 
           if(_injected[_injectName] === undefined)
@@ -360,7 +434,8 @@ define([],function(){
         /*** Inject Method ***
          -- injects an objects prototypes to allow for property event listeners
          */
-        Bind.injectPrototypes = function(obj,set,update){
+        Bind.injectPrototypes = function(obj,set,update)
+        {
           var _proto = obj.prototype,
               _injectName = obj.toString().split(/\s+/)[1].split('{')[0].replace('()',''),
               _keys = Object.getOwnPropertyNames(_proto),
@@ -500,7 +575,7 @@ define([],function(){
         /*** Pre Set Attribute Listener ***
          -- adds a property event listener to the desired property
          */
-        Bind.addAttrListener = function(attr,func)
+        Bind.addAttrListener = function(attr,func,child)
         {
           if(this.toString() !== Bind.toString())
           {
@@ -508,9 +583,20 @@ define([],function(){
             {
               this.kb_attrListeners()[attr] = [];
             }
+            if(child && this.kb_childAttrListeners()[attr] === undefined)
+            {
+              this.kb_childAttrListeners()[attr] = [];
+            }
             if(typeof func === 'function')
             {
-              this.kb_attrListeners()[attr].push(func);
+              if(child)
+              {
+                this.kb_childAttrListeners()[attr].push(func);
+              }
+              else
+              {
+                this.kb_attrListeners()[attr].push(func);
+              }
             }
             return this;
           }
@@ -527,11 +613,19 @@ define([],function(){
             return Bind;
           }
         }
+        
+        /*** Pre Set Child Attribute Listener ***
+         -- adds a property event listener to the desired property on self and all children
+         */
+        function addChildAttrListener(attr,func)
+        {
+            Bind.addAttrListener.call(this,attr,func,true);
+        }
 
         /*** Post Set Attribute Listener ***
          -- adds a property event listener to the desired property
          */
-        Bind.addAttrUpdateListener = function(attr,func)
+        Bind.addAttrUpdateListener = function(attr,func,child)
         {
           if(this.toString() !== Bind.toString())
           {
@@ -539,9 +633,20 @@ define([],function(){
             {
               this.kb_attrUpdateListeners()[attr] = [];
             }
+            if(child && this.kb_childAttrUpdateListeners()[attr] === undefined)
+            {
+              this.kb_childAttrUpdateListeners()[attr] = [];  
+            }
             if(typeof func === 'function')
             {
-              this.kb_attrUpdateListeners()[attr].push(func);
+              if(child)
+              {
+                this.kb_childAttrUpdateListeners()[attr].push(func);
+              }
+              else
+              {
+                this.kb_attrUpdateListeners()[attr].push(func);
+              }
             }
             return this;
           }
@@ -558,12 +663,24 @@ define([],function(){
             return Bind;
           }
         }
+        
+        /*** Post Set Attribute Listener ***
+         -- adds a property event listener to the desired property on all child elements
+         */
+        function addChildAttrUpdateListener(attr,func)
+        {
+          Bind.addAttrUpdateListener.call(this,attr,func,true);
+        }
 
         /*** Pre Attribute Listeners ***
          -- returns the object of all listeners
          */
         Bind.getAttrListeners = function()
         {
+          if(this.toString() !== Bind.toString())
+          {
+            return this.kb_attrListeners();
+          }
           return _attrListeners;
         }
 
@@ -572,6 +689,10 @@ define([],function(){
          */
         Bind.getAttrUpdateListeners = function()
         {
+          if(this.toString() !== Bind.toString())
+          {
+            return this.kb_attrUpdateListeners();
+          }
           return _attrUpdateListeners;
         }
 
@@ -589,6 +710,16 @@ define([],function(){
                 if(this.kb_attrListeners()[attr][x].toString() === func.toString())
                 {
                   this.kb_attrListeners()[attr].splice(x,1);
+                }
+              }
+              if(this.kb_childAttrListeners()[attr] !== undefined)
+              {
+                for(var x=0;x<this.kb_childAttrListeners()[attr].length;x+=1)
+                {
+                  if(this.kb_childAttrListeners()[attr][x].toString() === func.toString())
+                  {
+                    this.kb_childAttrListeners()[attr].splice(x,1);
+                  }
                 }
               }
             }
@@ -626,6 +757,16 @@ define([],function(){
                   this.kb_attrUpdateListeners()[attr].splice(x,1);
                 }
               }
+              if(this.kb_childAttrUpdateListeners()[attr] !== undefined)
+              {
+                for(var x=0;x<this.kb_childAttrUpdateListeners()[attr].length;x+=1)
+                {
+                  if(this.kb_childAttrUpdateListeners()[attr][x].toString() === func.toString())
+                  {
+                    this.kb_childAttrUpdateListeners()[attr].splice(x,1);
+                  }
+                }
+              }
             }
             return this;
           }
@@ -646,11 +787,11 @@ define([],function(){
         }
 
         //injects main prototypes for listening to dom changes
-        Bind.injectPrototypes(HTMLInputElement,_set,_update);
-        Bind.injectPrototypes(HTMLTextAreaElement,_set,_update);
         Bind.injectPrototypes(Node,_set,_update);
         Bind.injectPrototypes(Element,_set,_update);
         Bind.injectPrototypes(HTMLElement,_set,_update);
+        Bind.injectPrototypes(HTMLInputElement,_set,_update);
+        Bind.injectPrototypes(HTMLTextAreaElement,_set,_update);
         Bind.injectPrototypes(Document,_set,_update);
 
         return Bind;

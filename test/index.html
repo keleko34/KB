@@ -11,10 +11,20 @@
     <input id="testInputRadio" type="radio" />
     <textarea id="testTextarea"></textarea>
     <div id="testDisplay"></div>
+    
+    <div id="parent">
+      <div id="child1">
+        <div id="subchild1"></div>
+      </div>
+      <div id="child2"></div>
+    </div>
+    
     <script type="text/javascript">
       var testDisplay = document.getElementById('testDisplay');
       var testInput = document.getElementById('testInput');
       var textAreaInput = document.getElementById('testTextarea');
+      var parent = document.getElementById('parent');
+      var subChild1 = document.getElementById('subchild1');
       var kb = CreateKB();
 
       testInput.addAttrListener('value',function(e){
@@ -47,6 +57,11 @@
       })
       .addAttrListener("*",function(e){
         console.log(e);
+      });
+      
+      parent.addChildAttrListener('background',function(e){
+        console.log("preventing",e.child);
+        e.preventDefault();
       });
 
       function myObject(){};
