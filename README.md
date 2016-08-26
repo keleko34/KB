@@ -118,6 +118,24 @@ This library allows for adding attribute/property change listeners on the front 
     
     Logs: "first # 10 second # 20"
 
+###### NEW! use with style changes
+
+    var kb = CreateKB();
+    
+    var myNode = document.querySelector('#myNode')
+    
+    /* prevent text color changes */
+    kb.addAttrListener('color',function(e){
+      e.preventDefault();
+    })
+    
+    /* change the color based on a change */
+    myNode.addAttrListener('background',function(e){
+       if(e.value === "#000000") e.value = "#F00";
+    })
+    
+    kb.call();;
+
 ###### Event Properties
 
 - stopPropogration: (Function) stops all future added listeners from firing on this event
@@ -148,6 +166,9 @@ This library allows for adding attribute/property change listeners on the front 
  
  injectPrototypes (*Function Constructor with prototype, Function set, Function update*)<br />
  **injects object constructor prototypes with the set Function, and update Function, functions optional, constructor will auto put defaults if none exist note* inject only works with `(function name(){})` type objects formats and not `(var name = function(){})` as these type functions are named as an empty string**
+ 
+ injectStyle (*HTMLElement Element,String 'style property', Function set, Function update*)<br />
+ **injects a single style property on an element with the set Function, and update Function, functions optional, constructor will auto put defaults if none exist **
  
  injectedPrototypes ()<br />
  **returns an object of all injected objects**
