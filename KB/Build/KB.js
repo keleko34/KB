@@ -159,7 +159,8 @@ var CreateKB = (function(){
                       .concat(Array.prototype.slice.call(e.target.getElementsByTagName('TEXTAREA')).concat(extraTextArea)),
                 inc = Array.prototype.slice.call(inputs).concat(extraInput).filter(function(k){return k.type === 'radio' || k.type === 'checkbox'}),
                 allStyles = Object.getOwnPropertyNames(e.target.style).filter(function(k){return (k !== 'kb_bind')}),
-                all = Array.prototype.slice.call(e.target.querySelectorAll('*')).concat((e.attr === 'appendChild' ? [e.arguments[0]] : []));
+                all = Array.prototype.slice.call(e.target.querySelectorAll('*')).concat((e.attr === 'appendChild' ? [e.arguments[0]] : []))
+                      .filter(function(k){return (k.nodeType !== 3 && k.nodeType !== 8)});
 
             for(x=0;x<inp.length;x++)
             {
