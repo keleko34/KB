@@ -158,7 +158,7 @@ var CreateKB = (function(){
                       .filter(function(k){return k.type !== 'radio' && k.type !== 'checkbox';})
                       .concat(Array.prototype.slice.call(e.target.getElementsByTagName('TEXTAREA')).concat(extraTextArea)),
                 inc = Array.prototype.slice.call(inputs).concat(extraInput).filter(function(k){return k.type === 'radio' || k.type === 'checkbox'}),
-                allStyles = Object.getOwnPropertyNames(e.target.style),
+                allStyles = Object.getOwnPropertyNames(e.target.style).filter(function(k){return (k !== 'kb_bind')}),
                 all = Array.prototype.slice.call(e.target.querySelectorAll('*')).concat((e.attr === 'appendChild' ? [e.arguments[0]] : []));
 
             for(x=0;x<inp.length;x++)
@@ -181,6 +181,7 @@ var CreateKB = (function(){
             {
               for(var i=0;i<allStyles.length;i++)
               {
+
                 Bind.injectStyle(all[x],allStyles[i],_set,_update);
               }
             }
