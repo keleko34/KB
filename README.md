@@ -57,8 +57,8 @@ This library allows for adding attribute/property change listeners on the front 
     });
     
     /* Prevent class additions */
-    kb.addAttrListener('class',function(e){
-      if(e.target.getAttribute('id') === 'main'){
+    kb.addAttrListener('setAttribute',function(e){
+      if(e.arguments[0] === 'class' && e.target.getAttribute('id') === 'main'){
         e.preventDefault();
       }
     });
@@ -78,8 +78,10 @@ This library allows for adding attribute/property change listeners on the front 
         myVar = myNode.innerHTML;
     
     /* Prevent class additions */
-    myNode.addAttrListener('class',function(e){
+    myNode.addAttrListener('setAttribute',function(e){
+    if(e.arguments[0] === 'class'){
       e.preventDefault();
+    }
     })
     .addAttrListener('className',function(e){
       e.preventDefault();

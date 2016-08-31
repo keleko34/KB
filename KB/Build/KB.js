@@ -9,24 +9,29 @@ var CreateKB = (function(){
           , _injected = {}
         //holds all synced inputs for checking value updates
           , _inputs = []
+          
+          , _allStyles = Object.getOwnPropertyNames(document.all[0].style)
         //used in all for loops
           , x
         // used in all inner loops
           , i
         //travels up the dom return back all parents with child listeners
           , getParents = function(el,attr,update){
-            var parents = [];
-              while(el)
-              {
+            var parents = [],
+                x = 0,
+                type = (update ? "kb_childAttrUpdateListeners" : "kb_childAttrListeners");
+              /* Fancily this is more speedy than a while loop... */
+              for(x=0;el !== null;x=x){
                 el = el.parentElement;
-                if(el && el[(update ? "kb_childAttrUpdateListeners" : "kb_childAttrListeners")]()[attr] !== undefined){
-                  parents.push(el);
+                if(el !== null && el[type]()[attr] !== undefined){
+                  parents[x] = el;
+                  x++;
                 }
               }
               return parents;
             }
         //the base event object that is passed to every listeners upon change
-          , _changeEvent = function(el,attr,value,oldValue,args,action){
+          , _changeEvent = function(el,attr,value,oldValue,args,action,type){
               this.stopPropagation = function(){this._stopPropogation = true;};
               this.preventDefault = function(){this._preventDefault = true;};
               this.value = value;
@@ -36,109 +41,141 @@ var CreateKB = (function(){
               this.arguments = args;
               this.action = action;
               this.child = undefined;
+              this.type = type;
             }
         //the set function that runs on all changes
           , _set = function(el,prop,val,ret,args){
-              var e = new _changeEvent(el,prop,val,ret,args),
+              var e = new _changeEvent(el,prop,val,ret,args,'set'),
                   all = "*",
-                  parents = getParents(el,prop);
+                  parents = (el.parentElement !== undefined ? getParents(el,prop) : []),
+                  parentLength = parents.length,
+                  allListeners = _attrListeners[all],
+                  allListenersLength,
+                  attrListeners = _attrListeners[prop],
+                  attrListenerLength,
+                  elListener = (el.kb_attrListeners !== undefined ? el.kb_attrListeners()[prop] : undefined),
+                  elListenerLength;
 
-              if(_attrListeners[all] !== undefined)
+              if(allListeners !== undefined)
               {
-                loop:for(x=0;x<_attrListeners[all].length;x+=1)
+                allListenersLength = allListeners.length;
+                loop:for(x=0;x<allListenersLength;x+=1)
                 {
-                  _attrListeners[all][x].call(el,e);
-                  if(e._stopPropogation) break loop;
+                  allListeners[x].call(el,e);
+                  if(e._stopPropogation !== undefined) break loop;
                 }
               }
 
-              if(_attrListeners[prop] !== undefined && !e._stopPropogation)
+              if(attrListeners !== undefined && e._stopPropogation === undefined)
               {
-                loop:for(x=0;x<_attrListeners[prop].length;x+=1)
+                attrListenerLength = attrListeners.length;
+                loop:for(x=0;x<attrListenerLength;x+=1)
                 {
-                  _attrListeners[prop][x].call(el,e);
-                  if(e._stopPropogation) break loop;
+                  attrListeners[x].call(el,e);
+                  if(e._stopPropogation !== undefined) break loop;
                 }
               }
 
-              if(el.kb_attrListeners !== undefined && el.kb_attrListeners()[prop] !== undefined && !e._stopPropogation)
+              if(elListener !== undefined && e._stopPropogation === undefined)
               {
-                loop:for(x=0;x<el.kb_attrListeners()[prop].length;x+=1)
+                elListenerLength = elListener.length;
+                loop:for(x=0;x<elListenerLength;x+=1)
                 {
-                  el.kb_attrListeners()[prop][x].call(el,e);
-                  if(e._stopPropogation) break loop;
+                  elListener[x].call(el,e);
+                  if(e._stopPropogation !== undefined) break loop;
                 }
               }
             
-              if(parents.length > 0)
+              if(parentLength > 0 && e._stopPropogation === undefined)
               {
-                parentloop:for(x=0;x<parents.length;x++){
-                  loop:for(i=0;i<parents[x].kb_childAttrListeners()[prop].length;i++)
+                loop:for(x=0;x<parentLength;x++){
+                  var p = parents[x],
+                      attrparentListeners = p.kb_childAttrListeners()[prop],
+                      attrparentLength;
+                  if(attrparentListeners !== undefined)
                   {
-                    e.child = el;
-                    e.target = parents[x];
-                    parents[x].kb_childAttrListeners()[prop][i].call(parents[x],e);
-                    if(e._stopPropogation) break loop;
+                    attrparentLength = attrparentListeners.length;
+                    for(i=0;i<attrparentLength;i++)
+                    {
+                      e.child = el;
+                      e.target = p;
+                      attrparentListeners[i].call(p,e);
+                      if(e._stopPropogation !== undefined) break loop;
+                    }
                   }
                 }  
               }
 
-              if(e._preventDefault) return false;
+              if(e._preventDefault !== undefined) return false;
 
               return true;
             }
         //the update function that runs on all changes
           , _update = function(el,prop,val,ret,args,action){
-            var e = new _changeEvent(el,prop,val,ret,args,action),
+            var e = new _changeEvent(el,prop,val,ret,args,action,'update'),
                 all = "*",
-                parents = getParents(el,prop,true);
+                parents = (el.parentElement !== undefined ? getParents(el,prop,true) : []),
+                parentLength = parents.length,
+                allListeners = _attrListeners[all],
+                allListenersLength,
+                attrListeners = _attrListeners[prop],
+                attrListenerLength,
+                elListener = (el.kb_attrUpdateListeners !== undefined ? el.kb_attrUpdateListeners()[prop] : undefined),
+                elListenerLength;
 
-            if(_attrUpdateListeners[all] !== undefined)
+            if(allListeners !== undefined)
             {
-              loop:for(var x=0;x<_attrUpdateListeners[all].length;x+=1)
+              allListenersLength = allListeners.length;
+              loop:for(var x=0;x<allListenersLength;x+=1)
               {
-                _attrUpdateListeners[all][x].call(el,e);
-                if(e._stopPropogation) break loop;
+                allListeners[x].call(el,e);
+                if(e._stopPropogation !== undefined) break loop;
               }
             }
 
-            if(_attrUpdateListeners[prop] !== undefined)
+            if(attrListeners !== undefined && e._stopPropogation === undefined)
             {
-              loop:for(var x=0;x<_attrUpdateListeners[prop].length;x+=1)
+              attrListenerLength = attrListeners.length;
+              loop:for(var x=0;x<attrListenerLength;x+=1)
               {
-                _attrUpdateListeners[prop][x].call(el,e);
-                if(e._stopPropogation) break loop;
+                attrListeners[x].call(el,e);
+                if(e._stopPropogation !== undefined) break loop;
               }
             }
 
-            if(el.kb_attrUpdateListeners !== undefined && el.kb_attrUpdateListeners[prop] !== undefined)
+            if(elListener !== undefined && e._stopPropogation === undefined)
             {
-              loop:for(var x=0;x<el.kb_attrUpdateListeners[prop].length;x+=1)
+              elListenerLength = elListener.length;
+              loop:for(var x=0;x<elListenerLength;x+=1)
               {
-                el.kb_attrUpdateListeners[prop][x].call(el,e);
-                if(e._stopPropogation) break loop;
+                elListener[x].call(el,e);
+                if(e._stopPropogation !== undefined) break loop;
               }
             }
             
-            if(parents.length > 0)
+            if(parentLength > 0 && e._stopPropogation === undefined)
             {
-              parentloop:for(x=0;x<parents.length;x++){
-                loop:for(i=0;i<parents[x].kb_childAttrUpdateListeners()[prop].length;i++)
-                {
-                  e.child = el;
-                  e.target = parents[x];
-                  parents[x].kb_childAttrUpdateListeners()[prop][i].call(parent[x],e);
-                  if(e._stopPropogation) break loop;
+              loop:for(x=0;x<parentLength;x++){
+                var p = parents[x],
+                    attrParentListeners = p.kb_childAttrUpdateListeners()[prop],
+                    attrparentLength;
+                if(attrParentListeners !== undefined){
+                  attrparentLength = attrParentListeners.length;
+                  for(i=0;i<attrparentLength;i++)
+                  {
+                    e.child = el;
+                    e.target = p;
+                    attrParentListeners[i].call(p,e);
+                    if(e._stopPropogation !== undefined) break loop;
+                  } 
                 }
               }  
             }
 
-            if(e._preventDefault) return false;
+            if(e._preventDefault !== undefined) return false;
 
             return true;
           }
-
-
         /*** MAIN CONSTRUCTOR ***/
         function Bind()
         {
@@ -151,16 +188,24 @@ var CreateKB = (function(){
               e.target = e.target.parentElement;
             }
             var x=0,
-                extraInput = (e.attr === 'appendChild' && e.arguments[0].tagName === 'INPUT' ? e.arguments[0] : []),
-                extraTextArea = (e.attr === 'appendChild' && e.arguments[0].tagName === 'TEXTAREA' ? e.arguments[0] : []),
-                inputs = e.target.getElementsByTagName('INPUT'),
+                target = e.target,
+                passed = (e.arguments !== undefined ? e.arguments[0] : undefined),
+                extraInput = (e.attr === 'appendChild' && passedtagName === 'INPUT' ? passed : []),
+                extraTextArea = (e.attr === 'appendChild' && passed.tagName === 'TEXTAREA' ? passed : []),
+                inputs = target.getElementsByTagName('INPUT'),
                 inp = Array.prototype.slice.call(inputs).concat(extraInput)
                       .filter(function(k){return k.type !== 'radio' && k.type !== 'checkbox';})
-                      .concat(Array.prototype.slice.call(e.target.getElementsByTagName('TEXTAREA')).concat(extraTextArea)),
+                      .concat(Array.prototype.slice.call(target.getElementsByTagName('TEXTAREA')).concat(extraTextArea)),
                 inc = Array.prototype.slice.call(inputs).concat(extraInput).filter(function(k){return k.type === 'radio' || k.type === 'checkbox'}),
-                allStyles = Object.getOwnPropertyNames(e.target.style).filter(function(k){return (k !== 'kb_bind')}),
-                all = Array.prototype.slice.call(e.target.querySelectorAll('*')).concat((e.attr === 'appendChild' ? [e.arguments[0]] : []))
-                      .filter(function(k){return (k.nodeType !== 3 && k.nodeType !== 8)});
+                all = getAllChildren(target);
+                if(e.attr === 'appendChild')
+                {
+                  var nodeType = passed.nodeType;
+                  if(nodeType !== 3 && nodeType !== 8)
+                  {
+                    all[all.length] = passed;
+                  }
+                }
 
             for(x=0;x<inp.length;x++)
             {
@@ -178,14 +223,23 @@ var CreateKB = (function(){
               }
             }
             
-            for(x=0;x<all.length;x++)
+            bindStyles(all);
+          }
+          
+          function getAllChildren(el){
+            var arr = [],
+                list = el.querySelectorAll('*'),
+                len = list.length,
+                x,
+                i = 0;
+            for(x=0;x<len;x++)
             {
-              for(var i=0;i<allStyles.length;i++)
-              {
-
-                Bind.injectStyle(all[x],allStyles[i],_set,_update);
-              }
+              if(list[x].nodeType !== 3 && list[x].nodeType !== 8){
+                arr[i] = list[x];
+                i++;
+              }  
             }
+            return arr;
           }
           
           function syncInputs()
@@ -216,19 +270,25 @@ var CreateKB = (function(){
           
           function syncStyles()
           {
-            var allStyles = Object.getOwnPropertyNames(document.all[0].style);
-            for(var x=0;x<document.all.length;x++)
+            bindStyles(document.all);
+          }
+          
+          function bindStyles(all){
+            var len = all.length,
+                allStyleLen = _allStyles.length;
+            for(var x=0;x<len;x++)
             {
-              for(var i=0;i<allStyles.length;i++)
+              for(var i=0;i<allStyleLen;i++)
               {
-                Bind.injectStyle(document.all[x],allStyles[i],_set,_update);
+                Bind.injectStyle(all[x],_allStyles[i],_set,_update);
               }
             }
           }
-          
 
           //checks attributes inside of setAttribute and removeAttribute
-          function checkAttributes(e)
+          
+          /* Remove functionality for time being as increases performance hit drastically causes 4 methods to be ran for setAttribute and removeAttribute */
+          /*function checkAttributes(e)
           {
             var et = new _changeEvent(e.target,e.arguments[0],(e.attr === 'setAttribute' ? e.arguments[1] : ""),e.target.getAttribute(e.arguments[0]),(e.attr === 'setAttribute' ? [e.arguments[1]] : [""]));
             if(_attrListeners[et.attr] !== undefined)
@@ -262,7 +322,8 @@ var CreateKB = (function(){
                 }
               }
             }
-          }
+          }*/
+          
 
           var injectedKeys = Object.keys(_injected);
 
@@ -285,11 +346,11 @@ var CreateKB = (function(){
           Bind.addAttrUpdateListener('textContent',reSync);
 
           //allows for html attribute changes to be listened to just like properties
-          Bind.addAttrListener('setAttribute',checkAttributes);
-          Bind.addAttrListener('removeAttribute',checkAttributes);
+          //Bind.addAttrListener('setAttribute',checkAttributes);
+          //Bind.addAttrListener('removeAttribute',checkAttributes);
 
-          Bind.addAttrUpdateListener('setAttribute',checkUpdateAttributes);
-          Bind.addAttrUpdateListener('removeAttribute',checkUpdateAttributes);
+          //Bind.addAttrUpdateListener('setAttribute',checkUpdateAttributes);
+          //Bind.addAttrUpdateListener('removeAttribute',checkUpdateAttributes);
           
           //initially adds all styles for watching
           syncStyles();
@@ -302,7 +363,10 @@ var CreateKB = (function(){
         {
           var _proto = obj.prototype,
               _descriptor = Object.getOwnPropertyDescriptor(_proto,key),
-              _injectName = (_injectName || obj.toString().split(/\s+/)[1].split('{')[0].replace('()',''));
+              _injectName = (_injectName || obj.toString().split(/\s+/)[1].split('{')[0].replace('()','')),
+              _injectedObj = _injected[_injectName],
+              _set,
+              _update;
 
           if(_proto.addAttrListener === undefined && _proto.kb_attrListeners === undefined)
           {
@@ -358,14 +422,15 @@ var CreateKB = (function(){
             }
           }
 
-          if(_injected[_injectName] === undefined)
+          if(_injectedObj === undefined)
           {
             _injected[_injectName] = {obj:obj,proto:_proto,descriptors:{},set:undefined,update:undefined};
+            _injectedObj = _injected[_injectName];
           }
-          _injected[_injectName].set = (set ? set : _injected[_injectName].set);
-          _injected[_injectName].update = (update ? update : _injected[_injectName].update);
+          _injectedObj.set = (set ? set : _injected[_injectName].set);
+          _injectedObj.update = (update ? update : _injected[_injectName].update);
 
-          _injected[_injectName].descriptors[key] = _descriptor;
+          _injectedObj.descriptors[key] = _descriptor;
 
           if(_descriptor.set !== undefined && _descriptor.configurable)
           {
@@ -373,14 +438,16 @@ var CreateKB = (function(){
                   get:_descriptor.get,
                   set:function(v)
                   {
-                      var oldValue = _descriptor.get.apply(this);
-                      if(typeof _injected[_injectName].set == 'function' && _injected[_injectName].set(this,key,v,oldValue,arguments))
+                      var oldValue = _descriptor.get.apply(this),
+                          set = _injectedObj.set,
+                          update = _injectedObj.update;
+                      if(typeof set === 'function' && set(this,key,v,oldValue,arguments))
                       {
                         _descriptor.set.apply(this,arguments);
                       }
-                      if(typeof _injected[_injectName].update === 'function')
+                      if(typeof update === 'function')
                       {
-                        _injected[_injectName].update(this,key,v,oldValue);
+                        update(this,key,v,oldValue,arguments);
                       }
                   },
                   enumerable:true,
@@ -392,14 +459,16 @@ var CreateKB = (function(){
               Object.defineProperty(_proto,key,{
                   value:function()
                   {
-                    var action = null;
-                    if(typeof _injected[_injectName].set == 'function' && _injected[_injectName].set(this,key,null,null,arguments))
+                    var action = null,
+                        set = _injectedObj.set,
+                        update = _injectedObj.update;
+                    if(typeof set === 'function' && set(this,key,null,null,arguments))
                     {
                       action =  _descriptor.value.apply(this,arguments);
                     }
-                    if(typeof _injected[_injectName].update === 'function')
+                    if(typeof update === 'function')
                     {
-                      _injected[_injectName].update(this,key,null,null,arguments,action);
+                      update(this,key,null,null,arguments,action);
                     }
                     return action;
                   },
@@ -417,14 +486,16 @@ var CreateKB = (function(){
               },
               set:function(v)
               {
-                  var oldValue = _descriptor.value;
-                  if(typeof _injected[_injectName].set == 'function' && _injected[_injectName].set(this,key,v,oldValue))
+                  var oldValue = _descriptor.value,
+                      set = _injectedObj.set,
+                      update = _injectedObj.update;
+                  if(typeof set === 'function' && set(this,key,v,oldValue))
                   {
                     _descriptor.value = v;
                   }
-                  if(typeof _injected[_injectName].update === 'function')
+                  if(typeof update === 'function')
                   {
-                    _injected[_injectName].update(this,key,v,oldValue);
+                    update(this,key,v,oldValue);
                   }
               },
               enumerable:true,
@@ -440,6 +511,7 @@ var CreateKB = (function(){
         {
           var _proto = obj.prototype,
               _injectName = obj.toString().split(/\s+/)[1].split('{')[0].replace('()',''),
+              _injectedObj = _injected[_injectName],
               _keys = Object.getOwnPropertyNames(_proto),
               _descriptors = {},
               _onKeyDown = function(e){
@@ -452,39 +524,43 @@ var CreateKB = (function(){
                 }
                 var oldValue = (isCheck ? (typeof this.checked === 'string' ? (this.checked === 'true' ? "on" : "off") : (this.checked ? "on" : "off")) : this.value);
                 setTimeout((function(){
-                  if(isCheck && !_injected[_injectName].set(this,"checked",this.checked,oldCheck))
+                  var set = _injectedObj.set,
+                      update = _injectedObj.update;
+                  
+                  if(isCheck && !set(this,"checked",this.checked,oldCheck))
                   {
                     _descriptors["checked"].set.call(this,oldCheck);
                   }
                   else if(isCheck)
                   {
-                    if(typeof _injected[_injectName].update === 'function')
+                    if(typeof update === 'function')
                     {
-                      _injected[_injectName].update(this,"checked",this.checked,oldValue);
+                      update(this,"checked",this.checked,oldValue);
                     }
                   }
                   this.value = (isCheck ? (typeof this.checked === 'string' ? (this.checked === 'true' ? "on" : "off") : (this.checked ? "on" : "off")) : this.value);
 
-                  if(!_injected[_injectName].set(this,'value',this.value,oldValue))
+                  if(!set(this,'value',this.value,oldValue))
                   {
                     _descriptors["value"].set.call(this,oldValue);
                   }
                   else
                   {
-                    if(typeof _injected[_injectName].update === 'function')
+                    if(typeof update === 'function')
                     {
-                      _injected[_injectName].update(this,"value",this.value,oldValue);
+                      update(this,"value",this.value,oldValue);
                     }
                   }
                 }).bind(this),0);
               }
 
-          if(_injected[_injectName] === undefined)
+          if(_injectedObj === undefined)
           {
             _injected[_injectName] = {obj:obj,proto:_proto,descriptors:{},set:undefined,update:undefined};
+            _injectedObj = _injected[_injectName];
           }
-          _injected[_injectName].set = (set || _set);
-          _injected[_injectName].update = (update || _update);
+          _injectedObj.set = (set || _set);
+          _injectedObj.update = (update || _update);
 
 
           if(_keys.indexOf("value") > -1)

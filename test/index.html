@@ -71,10 +71,23 @@
       kb.injectPrototypes(myObject);
 
       kb();
+      var x = 0;
 
       var test = new myObject();
       var out = test.add(5,5);
       console.log(out);
+      
+      for(x=0;x<1000;x++){
+        parent.setAttribute('cool','something')
+      }
+      
+      for(x=0;x<1000;x++){
+        subChild1.innerHTML = Math.random();
+      }
+      
+      for(x=0;x<1000;x++){
+        subChild1.style.background = "#000";
+      }
     </script>
   </body>
 </html>
