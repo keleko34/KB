@@ -189,44 +189,79 @@ var CreateKB = (function(){
             }
             var x=0,
                 target = e.target,
-                passed = (e.arguments !== undefined ? e.arguments[0] : undefined),
-                extraInput = (e.attr === 'appendChild' && passedtagName === 'INPUT' ? passed : []),
-                extraTextArea = (e.attr === 'appendChild' && passed.tagName === 'TEXTAREA' ? passed : []),
                 inputs = target.getElementsByTagName('INPUT'),
-                inp = Array.prototype.slice.call(inputs).concat(extraInput)
-                      .filter(function(k){return k.type !== 'radio' && k.type !== 'checkbox';})
-                      .concat(Array.prototype.slice.call(target.getElementsByTagName('TEXTAREA')).concat(extraTextArea)),
-                inc = Array.prototype.slice.call(inputs).concat(extraInput).filter(function(k){return k.type === 'radio' || k.type === 'checkbox'}),
-                all = getAllChildren(target);
-                if(e.attr === 'appendChild')
-                {
-                  var nodeType = passed.nodeType;
-                  if(nodeType !== 3 && nodeType !== 8)
-                  {
-                    all[all.length] = passed;
-                  }
-                }
+                textareas = target.getElementsByTagName('TEXTAREA'),
+                inp = getAllInputs(inputs,textareas,e),
+                inc = getAllInputBoxes(inputs,e),
+                all = getAllChildren(target,e);
 
             for(x=0;x<inp.length;x++)
             {
-              if(inp[x].kb_onkeydown === undefined)
-              {
-                inp[x].kb_addInputBinding();
-              }
+              inp[x].kb_addInputBinding();
             }
 
             for(x=0;x<inc.length;x++)
             {
-              if(inc[x].kb_onmousedown === undefined)
-              {
-                inc[x].kb_addInputBoxBinding();
-              }
+              inc[x].kb_addInputBoxBinding();
             }
             
             bindStyles(all);
           }
           
-          function getAllChildren(el){
+          function getAllInputs(inputs,textareas,e){
+            var inputsLen = inputs.length,
+                textLen = textareas.length,
+                arr = [],
+                x,
+                i = 0;
+            for(x=0;x<inputsLen;x++){
+              var type = inputs[x].type;
+              if(type !== 'radio' && type !== 'checkbox' && inputs[x].kb_onkeydown === undefined && inputs[x].kb_onmousedown === undefined){
+                arr[i] = inputs[x];
+                i++;
+              }
+            }
+            for(x=0;x<textareas;x++){
+              arr[i] = textareas[x];
+              i++;
+            }
+            if(e.attr === 'appendChild')
+            {
+              var node = e.arguments[0],
+                  tag = node.tagName;
+              if((tag === 'INPUT' && node.type !== 'checkbox' && node.type !== 'radio') || tag === 'TEXTAREA')
+              {
+                arr[arr.length] = node;
+              }
+            }
+            return arr;
+          }
+          
+          function getAllInputBoxes(inputs,e){
+            var inputsLen = inputs.length,
+                arr = [],
+                x,
+                i = 0;
+            for(x=0;x<inputsLen;x++){
+              var type = inputs[x].type;
+              if(type === 'radio' || type === 'checkbox' && inputs[x].kb_onkeydown === undefined && inputs[x].kb_onmousedown === undefined){
+                arr[i] = inputs[x];
+                i++;
+              }
+            }
+            if(e.attr === 'appendChild')
+            {
+              var node = e.arguments[0],
+                  tag = node.tagName;
+              if(tag === 'INPUT' && node.type === 'checkbox' && node.type === 'radio')
+              {
+                arr[arr.length] = node;
+              }
+            }
+            return arr;
+          }
+          
+          function getAllChildren(el,e){
             var arr = [],
                 list = el.querySelectorAll('*'),
                 len = list.length,
@@ -239,6 +274,14 @@ var CreateKB = (function(){
                 i++;
               }  
             }
+            if(e.attr === 'appendChild')
+            {
+              var nodeType = e.arguments[0].nodeType;
+              if(nodeType !== 3 && nodeType !== 8)
+              {
+                arr[arr.length] = e.arguments[0];
+              }
+            }
             return arr;
           }
           
@@ -246,25 +289,19 @@ var CreateKB = (function(){
           {
             var x=0,
                 inputs = document.getElementsByTagName('INPUT'),
-                inp = Array.prototype.slice.call(inputs)
-                      .filter(function(k){return k.type !== 'radio' && k.type !== 'checkbox';})
-                      .concat(Array.prototype.slice.call(document.getElementsByTagName('TEXTAREA'))),
-                inc = Array.prototype.slice.call(inputs).filter(function(k){return k.type === 'radio' || k.type === 'checkbox'});
+                textareas = document.getElementsByTagName('TEXTAREA'),
+                e = {attr:'initial'},
+                inp = getAllInputs(inputs,textareas,e),
+                inc = getAllInputBoxes(inputs,e);
 
             for(x=0;x<inp.length;x++)
             {
-              if(inp[x].kb_onkeydown === undefined)
-              {
-                inp[x].kb_addInputBinding();
-              }
+              inp[x].kb_addInputBinding();
             }
 
             for(x=0;x<inc.length;x++)
             {
-              if(inc[x].kb_onmousedown === undefined)
-              {
-                inc[x].kb_addInputBoxBinding();
-              }
+              inc[x].kb_addInputBoxBinding();
             }
           }
           
@@ -288,42 +325,21 @@ var CreateKB = (function(){
           //checks attributes inside of setAttribute and removeAttribute
           
           /* Remove functionality for time being as increases performance hit drastically causes 4 methods to be ran for setAttribute and removeAttribute */
-          /*function checkAttributes(e)
+          function checkAttributes(e)
           {
-            var et = new _changeEvent(e.target,e.arguments[0],(e.attr === 'setAttribute' ? e.arguments[1] : ""),e.target.getAttribute(e.arguments[0]),(e.attr === 'setAttribute' ? [e.arguments[1]] : [""]));
-            if(_attrListeners[et.attr] !== undefined)
-            {
-              for(x=0;x<_attrListeners[et.attr].length;x+=1)
-              {
-                _attrListeners[et.attr][x].call(et.target,et);
-                if(et._stopPropogation)
-                {
-                  e.stopPropagation();
-                }
-                if(et._preventDefault)
-                {
-                  e.preventDefault();
-                }
-              }
-            }
+            var old = e.target.getAttribute(e.arguments[0]);
+            setTimeout(function(){
+                _set(e.target,e.arguments[0],(e.attr === 'setAttribute' ? e.arguments[1] : ""),old,(e.attr === 'setAttribute' ? [e.arguments[1]] : [""]));
+            },0);
           }
 
           function checkUpdateAttributes(e)
           {
-            var et = new _changeEvent(e.target,e.arguments[0],(e.attr === 'setAttribute' ? e.arguments[1] : ""),e.target.getAttribute(e.arguments[0]),(e.attr === 'setAttribute' ? [e.arguments[1]] : [""]));
-            if(_attrUpdateListeners[et.attr] !== undefined)
-            {
-              for(x=0;x<_attrUpdateListeners[et.attr].length;x+=1)
-              {
-                _attrUpdateListeners[et.attr][x].call(et.target,et);
-                if(et._stopPropogation)
-                {
-                  e.stopPropagation();
-                }
-              }
-            }
-          }*/
-          
+            var old = e.target.getAttribute(e.arguments[0]);
+            setTimeout(function(){
+                _set(e.target,e.arguments[0],(e.attr === 'setAttribute' ? e.arguments[1] : ""),old,(e.attr === 'setAttribute' ? [e.arguments[1]] : [""]));
+            },0);
+          }
 
           var injectedKeys = Object.keys(_injected);
 
@@ -346,11 +362,11 @@ var CreateKB = (function(){
           Bind.addAttrUpdateListener('textContent',reSync);
 
           //allows for html attribute changes to be listened to just like properties
-          //Bind.addAttrListener('setAttribute',checkAttributes);
-          //Bind.addAttrListener('removeAttribute',checkAttributes);
+          Bind.addAttrListener('setAttribute',checkAttributes);
+          Bind.addAttrListener('removeAttribute',checkAttributes);
 
-          //Bind.addAttrUpdateListener('setAttribute',checkUpdateAttributes);
-          //Bind.addAttrUpdateListener('removeAttribute',checkUpdateAttributes);
+          Bind.addAttrUpdateListener('setAttribute',checkUpdateAttributes);
+          Bind.addAttrUpdateListener('removeAttribute',checkUpdateAttributes);
           
           //initially adds all styles for watching
           syncStyles();
