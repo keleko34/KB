@@ -116,9 +116,9 @@ var CreateKB = (function(){
                 all = "*",
                 parents = (el.parentElement !== undefined ? getParents(el,prop,true) : []),
                 parentLength = parents.length,
-                allListeners = _attrListeners[all],
+                allListeners = _attrUpdateListeners[all],
                 allListenersLength,
-                attrListeners = _attrListeners[prop],
+                attrListeners = _attrUpdateListeners[prop],
                 attrListenerLength,
                 elListener = (el.kb_attrUpdateListeners !== undefined ? el.kb_attrUpdateListeners()[prop] : undefined),
                 elListenerLength;
@@ -327,18 +327,18 @@ var CreateKB = (function(){
           /* Remove functionality for time being as increases performance hit drastically causes 4 methods to be ran for setAttribute and removeAttribute */
           function checkAttributes(e)
           {
-            var old = e.target.getAttribute(e.arguments[0]);
-            setTimeout(function(){
-                _set(e.target,e.arguments[0],(e.attr === 'setAttribute' ? e.arguments[1] : ""),old,(e.attr === 'setAttribute' ? [e.arguments[1]] : [""]));
-            },0);
+            var oldAttr = e.target.attributes[e.arguments[0]],
+                old = (oldAttr !== undefined ? oldAttr.value : "");
+            if(!_set(e.target,e.arguments[0],(e.attr === 'setAttribute' ? e.arguments[1] : ""),old,(e.attr === 'setAttribute' ? [e.arguments[1]] : [""]))){
+              e.preventDefault();
+            }
           }
 
           function checkUpdateAttributes(e)
           {
-            var old = e.target.getAttribute(e.arguments[0]);
-            setTimeout(function(){
-                _set(e.target,e.arguments[0],(e.attr === 'setAttribute' ? e.arguments[1] : ""),old,(e.attr === 'setAttribute' ? [e.arguments[1]] : [""]));
-            },0);
+            var oldAttr = e.target.attributes[e.arguments[0]],
+                old = (oldAttr !== undefined ? oldAttr.value : "");
+                _update(e.target,e.arguments[0],(e.attr === 'setAttribute' ? e.arguments[1] : ""),old,(e.attr === 'setAttribute' ? [e.arguments[1]] : [""]));
           }
 
           var injectedKeys = Object.keys(_injected);

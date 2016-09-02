@@ -57,7 +57,10 @@
       })
       .addAttrListener("*",function(e){
         console.log(e);
-      });
+      })
+      .addAttrListener("class",function(e){
+        if(e.value === 'cool') e.preventDefault();
+      })
       
       parent.addChildAttrListener('background',function(e){
         console.log("preventing",e.child);
@@ -88,6 +91,10 @@
       for(x=0;x<1000;x++){
         subChild1.style.background = "#000";
       }
+
+      subChild1.className = 'something';
+      subChild1.setAttribute('class','cool');
+
     </script>
   </body>
 </html>
