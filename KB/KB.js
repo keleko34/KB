@@ -184,7 +184,7 @@ define([],function(){
           function reSync(e)
           {
             var arg = e.arguments[0];
-            if(e.attr === 'appendChild' && (arg.tagName === 'SCRIPT' || arg.tagName === 'LINK')){
+            if(e.attr === 'appendChild' && (arg.tagName === 'SCRIPT' || arg.tagName === 'LINK' || arg.nodeName === '#text' || arg.nodeName === '#comment')){
               e.stopPropagation();
               return;
             }
@@ -312,7 +312,9 @@ define([],function(){
           
           function syncStyles()
           {
-            bindStyles(document.all);
+            var all = Array.prototype.slice.call(document.body.querySelectorAll('*'));
+            all.unshift(document.body);
+            bindStyles(all);
           }
           
           function bindStyles(all){
