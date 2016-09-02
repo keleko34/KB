@@ -7,8 +7,6 @@ var CreateKB = (function(){
           , _attrUpdateListeners = {}
         //holds all injected objects and thier descriptors, functions and set and update functions eg: {HTMLElement:{obj:HTMLElement,proto:HTMLElement.prototype,descriptors:{},functions:{},set:function(){},update:function(){}}}
           , _injected = {}
-        //holds all synced inputs for checking value updates
-          , _inputs = []
           
           , _allStyles = Object.getOwnPropertyNames(document.all[0].style)
         //used in all for loops

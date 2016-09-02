@@ -1,3 +1,10 @@
+/* ways to speed up code */
+/*
+   1. style listeners are added on demand
+   2. getParents executes them as they are retrieved rather than seperate loop
+*/
+
+
 define([],function(){
 	function CreateKB(){
 
@@ -7,14 +14,34 @@ define([],function(){
           , _attrUpdateListeners = {}
         //holds all injected objects and thier descriptors, functions and set and update functions eg: {HTMLElement:{obj:HTMLElement,proto:HTMLElement.prototype,descriptors:{},functions:{},set:function(){},update:function(){}}}
           , _injected = {}
-        //holds all synced inputs for checking value updates
-          , _inputs = []
           
           , _allStyles = Object.getOwnPropertyNames(document.all[0].style)
         //used in all for loops
           , x
         // used in all inner loops
           , i
+
+          , _loopParents = function(el,attr,update,e){
+            var x,
+                type = (update ? "kb_childAttrUpdateListeners" : "kb_childAttrListeners"),
+                attrListeners,
+                attrListenersLen;
+            /* Fancily this is more speedy than a while loop... */
+            for(x=0;el !== null;x=x){
+              el = el.parentElement;
+              attrListeners = el[type]()[attr];
+              attrListenersLen = attrListeners.length;
+              if(el !== null && attrListeners !== undefined){
+                for(i=0;i<attrparentLength;i++)
+                {
+                  e.child = el;
+                  e.target = p;
+                  attrparentListeners[i].call(p,e);
+                  if(e._stopPropogation !== undefined) break loop;
+                }
+              }
+            }
+          }
         //travels up the dom return back all parents with child listeners
           , getParents = function(el,attr,update){
             var parents = [],
