@@ -183,14 +183,19 @@ var CreateKB = (function(){
           //resyncs inputs and styles in case new ones were added to the DOM or old ones were removed
           function reSync(e)
           {
+            var arg = e.arguments[0];
+            if(e.attr === 'appendChild' && (arg.tagName === 'SCRIPT' || arg.tagName === 'LINK')){
+              e.stopPropagation();
+              return;
+            }
             if(e.attr === 'outerHTML' || e.attr === 'outerText')
             {
               e.target = e.target.parentElement;
             }
             var x=0,
                 target = e.target,
-                inputs = target.getElementsByTagName('INPUT'),
-                textareas = target.getElementsByTagName('TEXTAREA'),
+                inputs = (e.attr !== 'appendChild' ? target.getElementsByTagName('INPUT') : e.arguments[0].getElementsByTagName('INPUT')),
+                textareas = (e.attr !== 'appendChild' ? target.getElementsByTagName('TEXTAREA') : e.arguments[0].getElementsByTagName('TEXTAREA')),
                 inp = getAllInputs(inputs,textareas,e),
                 inc = getAllInputBoxes(inputs,e),
                 all = getAllChildren(target,e);
@@ -221,7 +226,7 @@ var CreateKB = (function(){
                 i++;
               }
             }
-            for(x=0;x<textareas;x++){
+            for(x=0;x<textLen;x++){
               arr[i] = textareas[x];
               i++;
             }
@@ -263,7 +268,7 @@ var CreateKB = (function(){
           
           function getAllChildren(el,e){
             var arr = [],
-                list = el.querySelectorAll('*'),
+                list = (e.attr !== 'appendChild' ? el.querySelectorAll('*') : e.arguments[0].querySelectorAll('*')),
                 len = list.length,
                 x,
                 i = 0;
@@ -329,23 +334,18 @@ var CreateKB = (function(){
           {
             var oldAttr = e.target.attributes[e.arguments[0]],
                 old = (oldAttr !== undefined ? oldAttr.value : ""),
-                attr = e.arguments[0];
-            setTimeout(function(){
-              if(!_set(e.target,e.arguments[0],(e.attr === 'setAttribute' ? e.arguments[1] : ""),old,(e.attr === 'setAttribute' ? [e.arguments[1]] : [""]))){
-                var setAttr = document.createAttribute(attr);
-                setAttr.value = old;
-                e.target.attributes.setNamedItem(setAttr);
+                val = (e.attr === 'setAttribute' ? e.arguments[1] : "");
+              if(!_set(e.target,e.arguments[0],val,old,[val])){
+                e.preventDefault();
               }
-            },0);
           }
 
           function checkUpdateAttributes(e)
           {
             var oldAttr = e.target.attributes[e.arguments[0]],
-                old = (oldAttr !== undefined ? oldAttr.value : "");
-            setTimeout(function(){
-              _update(e.target,e.arguments[0],(e.attr === 'setAttribute' ? e.arguments[1] : ""),old,(e.attr === 'setAttribute' ? [e.arguments[1]] : [""]));
-            },0);
+                old = (oldAttr !== undefined ? oldAttr.value : ""),
+                val = (e.attr === 'setAttribute' ? e.arguments[1] : "");
+              _update(e.target,e.arguments[0],val,old,[val]);
           }
 
           var injectedKeys = Object.keys(_injected);
