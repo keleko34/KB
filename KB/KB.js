@@ -324,21 +324,28 @@ define([],function(){
 
           //checks attributes inside of setAttribute and removeAttribute
           
-          /* Remove functionality for time being as increases performance hit drastically causes 4 methods to be ran for setAttribute and removeAttribute */
+          /* The reason for the setTimeouts is that this ability drastically hurts requirejs performance when it is building its script tags, though this process comes with a caveat and that is the prefentDefault can not work as expected as the value will be set prior to this set being ran and if the chain is blocked and this value is set again prior to this running the oldvalue may be lost, a safer way would be just to watch the 'setAttribute' property rather than an attr itself such as 'class' */
           function checkAttributes(e)
           {
             var oldAttr = e.target.attributes[e.arguments[0]],
-                old = (oldAttr !== undefined ? oldAttr.value : "");
-            if(!_set(e.target,e.arguments[0],(e.attr === 'setAttribute' ? e.arguments[1] : ""),old,(e.attr === 'setAttribute' ? [e.arguments[1]] : [""]))){
-              e.preventDefault();
-            }
+                old = (oldAttr !== undefined ? oldAttr.value : ""),
+                attr = e.arguments[0];
+            setTimeout(function(){
+              if(!_set(e.target,e.arguments[0],(e.attr === 'setAttribute' ? e.arguments[1] : ""),old,(e.attr === 'setAttribute' ? [e.arguments[1]] : [""]))){
+                var setAttr = document.createAttribute(attr);
+                setAttr.value = old;
+                e.target.attributes.setNamedItem(setAttr);
+              }
+            },0);
           }
 
           function checkUpdateAttributes(e)
           {
             var oldAttr = e.target.attributes[e.arguments[0]],
                 old = (oldAttr !== undefined ? oldAttr.value : "");
-                _update(e.target,e.arguments[0],(e.attr === 'setAttribute' ? e.arguments[1] : ""),old,(e.attr === 'setAttribute' ? [e.arguments[1]] : [""]));
+            setTimeout(function(){
+              _update(e.target,e.arguments[0],(e.attr === 'setAttribute' ? e.arguments[1] : ""),old,(e.attr === 'setAttribute' ? [e.arguments[1]] : [""]));
+            },0);
           }
 
           var injectedKeys = Object.keys(_injected);
