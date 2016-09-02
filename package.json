@@ -1,6 +1,6 @@
 {
   "name": "KB",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "description": "A Dom Attributes Binding and Event Listener Library",
   "keywords": [
     "DOM",
