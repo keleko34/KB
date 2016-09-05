@@ -2,7 +2,7 @@
 <html>
   <head>
     <title>Testing</title>
-    <script type="text/javascript" src="../KB/Build/KB.js"></script>
+    <script type="text/javascript" src="../bower_components/requirejs/require.js"></script>
   </head>
   <body>
     <h1 id="testDiv">Test Title</h1>
@@ -18,83 +18,82 @@
       </div>
       <div id="child2"></div>
     </div>
-    
     <script type="text/javascript">
-      var testDisplay = document.getElementById('testDisplay');
-      var testInput = document.getElementById('testInput');
-      var textAreaInput = document.getElementById('testTextarea');
-      var parent = document.getElementById('parent');
-      var subChild1 = document.getElementById('subchild1');
-      var kb = CreateKB();
+      require([('./KB/init.js'+location.search)],function(kb){
+        var testDisplay = document.getElementById('testDisplay'),
+            testInput = document.getElementById('testInput'),
+            textAreaInput = document.getElementById('testTextarea'),
+            parent = document.getElementById('parent'),
+            subChild1 = document.getElementById('subchild1'),
+            kb = kb();
 
-      testInput.addAttrListener('value',function(e){
-        console.log(e);
-        if(e.value === 'cool')
-        {
+        testInput.addAttrListener('value',function(e){
+          console.log(e);
+          if(e.value === 'cool')
+          {
+            e.preventDefault();
+            return;
+          }
+          testDisplay.innerHTML = e.value;
+        })
+        textAreaInput.addAttrListener('value',function(e){
+          console.log(e);
+        });
+        kb.addAttrListener("checked",function(e){
+          console.log(e);
+        })
+        .addAttrListener('appendChild',function(e){
+          console.log(e);
+        })
+        .addAttrListener('innerHTML',function(e){
+          console.log(e); //fires when input value changes
+        })
+        .addAttrListener('add',function(e){
+          console.log(e);
+          if(e.arguments[0]+e.arguments[1] === 10)
+          {
+            e.preventDefault();
+          }
+        })
+        .addAttrListener("*",function(e){
+          console.log(e);
+        })
+        .addAttrListener("class",function(e){
+          if(e.value === 'cool') e.preventDefault();
+        })
+
+        parent.addChildAttrListener('background',function(e){
+          console.log("preventing",e.child);
           e.preventDefault();
-          return;
+        });
+
+        function myObject(){};
+
+        myObject.prototype.add = function(a,b){return a+b;};
+
+        kb.binder.injectPrototypes(myObject);
+
+        var x = 0;
+
+        var test = new myObject();
+        var out = test.add(5,5);
+        console.log(out);
+
+        for(x=0;x<1000;x++){
+          parent.setAttribute('cool','something')
         }
-        testDisplay.innerHTML = e.value;
-      })
-      textAreaInput.addAttrListener('value',function(e){
-        console.log(e);
-      });
-      kb.addAttrListener("checked",function(e){
-        console.log(e);
-      })
-      .addAttrListener('appendChild',function(e){
-        console.log(e);
-      })
-      .addAttrListener('innerHTML',function(e){
-        console.log(e); //fires when input value changes
-      })
-      .addAttrListener('add',function(e){
-        console.log(e);
-        if(e.arguments[0]+e.arguments[1] === 10)
-        {
-          e.preventDefault();
+
+        for(x=0;x<1000;x++){
+          subChild1.innerHTML = Math.random();
         }
+
+        for(x=0;x<1000;x++){
+          subChild1.style.background = "#000";
+        }
+
+        subChild1.className = 'something';
+        subChild1.setAttribute('class','cool');
       })
-      .addAttrListener("*",function(e){
-        console.log(e);
-      })
-      .addAttrListener("class",function(e){
-        if(e.value === 'cool') e.preventDefault();
-      })
-      
-      parent.addChildAttrListener('background',function(e){
-        console.log("preventing",e.child);
-        e.preventDefault();
-      });
-
-      function myObject(){};
-
-      myObject.prototype.add = function(a,b){return a+b;};
-
-      kb.injectPrototypes(myObject);
-
-      kb();
-      var x = 0;
-
-      var test = new myObject();
-      var out = test.add(5,5);
-      console.log(out);
-      
-      for(x=0;x<1000;x++){
-        parent.setAttribute('cool','something')
-      }
-      
-      for(x=0;x<1000;x++){
-        subChild1.innerHTML = Math.random();
-      }
-      
-      for(x=0;x<1000;x++){
-        subChild1.style.background = "#000";
-      }
-
-      subChild1.className = 'something';
-      subChild1.setAttribute('class','cool');
-
     </script>
   </body>
 </html>

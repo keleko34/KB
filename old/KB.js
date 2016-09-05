@@ -9,7 +9,7 @@ define([],function(){
           , _injected = {}
         //holds all synced inputs for checking value updates
           , _inputs = []
-          
+
           , _allStyles = Object.getOwnPropertyNames(document.all[0].style)
         //used in all for loops
           , x
@@ -85,7 +85,7 @@ define([],function(){
                   if(e._stopPropogation !== undefined) break loop;
                 }
               }
-            
+
               if(parentLength > 0 && e._stopPropogation === undefined)
               {
                 loop:for(x=0;x<parentLength;x++){
@@ -103,7 +103,7 @@ define([],function(){
                       if(e._stopPropogation !== undefined) break loop;
                     }
                   }
-                }  
+                }
               }
 
               if(e._preventDefault !== undefined) return false;
@@ -152,7 +152,7 @@ define([],function(){
                 if(e._stopPropogation !== undefined) break loop;
               }
             }
-            
+
             if(parentLength > 0 && e._stopPropogation === undefined)
             {
               loop:for(x=0;x<parentLength;x++){
@@ -167,9 +167,9 @@ define([],function(){
                     e.target = p;
                     attrParentListeners[i].call(p,e);
                     if(e._stopPropogation !== undefined) break loop;
-                  } 
+                  }
                 }
-              }  
+              }
             }
 
             if(e._preventDefault !== undefined) return false;
@@ -209,10 +209,10 @@ define([],function(){
             {
               inc[x].kb_addInputBoxBinding();
             }
-            
+
             bindStyles(all);
           }
-          
+
           function getAllInputs(inputs,textareas,e){
             var inputsLen = inputs.length,
                 textLen = textareas.length,
@@ -241,7 +241,7 @@ define([],function(){
             }
             return arr;
           }
-          
+
           function getAllInputBoxes(inputs,e){
             var inputsLen = inputs.length,
                 arr = [],
@@ -265,7 +265,7 @@ define([],function(){
             }
             return arr;
           }
-          
+
           function getAllChildren(el,e){
             var arr = [],
                 list = (e.attr !== 'appendChild' ? el.querySelectorAll('*') : e.arguments[0].querySelectorAll('*')),
@@ -277,7 +277,7 @@ define([],function(){
               if(list[x].nodeType !== 3 && list[x].nodeType !== 8){
                 arr[i] = list[x];
                 i++;
-              }  
+              }
             }
             if(e.attr === 'appendChild')
             {
@@ -289,7 +289,7 @@ define([],function(){
             }
             return arr;
           }
-          
+
           function syncInputs()
           {
             var x=0,
@@ -309,14 +309,14 @@ define([],function(){
               inc[x].kb_addInputBoxBinding();
             }
           }
-          
+
           function syncStyles()
           {
             var all = Array.prototype.slice.call(document.body.querySelectorAll('*'));
             all.unshift(document.body);
             bindStyles(all);
           }
-          
+
           function bindStyles(all){
             var len = all.length,
                 allStyleLen = _allStyles.length;
@@ -330,7 +330,7 @@ define([],function(){
           }
 
           //checks attributes inside of setAttribute and removeAttribute
-          
+
           /* The reason for the setTimeouts is that this ability drastically hurts requirejs performance when it is building its script tags, though this process comes with a caveat and that is the prefentDefault can not work as expected as the value will be set prior to this set being ran and if the chain is blocked and this value is set again prior to this running the oldvalue may be lost, a safer way would be just to watch the 'setAttribute' property rather than an attr itself such as 'class' */
           function checkAttributes(e)
           {
@@ -376,10 +376,10 @@ define([],function(){
 
           Bind.addAttrUpdateListener('setAttribute',checkUpdateAttributes);
           Bind.addAttrUpdateListener('removeAttribute',checkUpdateAttributes);
-          
+
           //initially adds all styles for watching
           syncStyles();
-          
+
           //initially adds inputs for watching
           syncInputs();
         }
@@ -429,7 +429,7 @@ define([],function(){
             };
             _proto.addAttrUpdateListener = Bind.addAttrUpdateListener;
             _proto.removeAttrUpdateListener = Bind.removeAttrUpdateListener;
-            
+
           }
           if(_proto.hasOwnProperty('children') &&  _proto.addChildAttrUpdateListener === undefined && _proto.kb_childAttrUpdateListeners === undefined)
           {
@@ -551,7 +551,7 @@ define([],function(){
                 setTimeout((function(){
                   var set = _injectedObj.set,
                       update = _injectedObj.update;
-                  
+
                   if(isCheck && !set(this,"checked",this.checked,oldCheck))
                   {
                     _descriptors["checked"].set.call(this,oldCheck);
@@ -625,12 +625,12 @@ define([],function(){
           }
           return Bind;
         }
-        
+
         Bind.injectStyle = function(el,key,set,update)
         {
           var _descriptor = Object.getOwnPropertyDescriptor(el.style,key),
               _proto = el.style;
-          
+
           if(el.style.kb_bind === undefined)
           {
             el.style.kb_bind = {obj:el,proto:_proto,descriptors:{},set:undefined,update:undefined};
@@ -639,7 +639,7 @@ define([],function(){
           el.style.kb_bind.update = (update ? update : _injected[_injectName].update);
 
           el.style.kb_bind.descriptors[key] = _descriptor;
-          
+
           if(_descriptor.value !== undefined && _descriptor.configurable)
           {
             Object.defineProperty(_proto,key,{
@@ -716,7 +716,7 @@ define([],function(){
             return Bind;
           }
         }
-        
+
         /*** Pre Set Child Attribute Listener ***
          -- adds a property event listener to the desired property on self and all children
          */
@@ -738,7 +738,7 @@ define([],function(){
             }
             if(child && this.kb_childAttrUpdateListeners()[attr] === undefined)
             {
-              this.kb_childAttrUpdateListeners()[attr] = [];  
+              this.kb_childAttrUpdateListeners()[attr] = [];
             }
             if(typeof func === 'function')
             {
@@ -766,7 +766,7 @@ define([],function(){
             return Bind;
           }
         }
-        
+
         /*** Post Set Attribute Listener ***
          -- adds a property event listener to the desired property on all child elements
          */
