@@ -1,7 +1,6 @@
 /* ways to speed up code */
 /*
    1. style listeners are added on demand
-   2. getParents executes them as they are retrieved rather than seperate loop
 */
 
 
@@ -26,37 +25,25 @@ define([],function(){
                 type = (update ? "kb_childAttrUpdateListeners" : "kb_childAttrListeners"),
                 attrListeners,
                 attrListenersLen;
+
+            e.child = el;
             /* Fancily this is more speedy than a while loop... */
-            for(x=0;el !== null;x=x){
+            loop:for(x=0;(el !== null && el !== undefined);x=x){
               el = el.parentElement;
-              attrListeners = el[type]()[attr];
-              attrListenersLen = attrListeners.length;
-              if(el !== null && attrListeners !== undefined){
-                for(i=0;i<attrparentLength;i++)
-                {
-                  e.child = el;
-                  e.target = p;
-                  attrparentListeners[i].call(p,e);
-                  if(e._stopPropogation !== undefined) break loop;
+              if(el !== null && el !== undefined){
+                 attrListeners = el[type]()[attr];
+                if(attrListeners !== undefined){
+                  attrListenersLen = attrListeners.length;
+                  for(i=0;i<attrListenersLen;i++)
+                  {
+                    e.target = el;
+                    attrListeners[i].call(el,e);
+                    if(e._stopPropogation !== undefined) break loop;
+                  }
                 }
               }
             }
           }
-        //travels up the dom return back all parents with child listeners
-          , getParents = function(el,attr,update){
-            var parents = [],
-                x = 0,
-                type = (update ? "kb_childAttrUpdateListeners" : "kb_childAttrListeners");
-              /* Fancily this is more speedy than a while loop... */
-              for(x=0;el !== null;x=x){
-                el = el.parentElement;
-                if(el !== null && el[type]()[attr] !== undefined){
-                  parents[x] = el;
-                  x++;
-                }
-              }
-              return parents;
-            }
         //the base event object that is passed to every listeners upon change
           , _changeEvent = function(el,attr,value,oldValue,args,action,type){
               this.stopPropagation = function(){this._stopPropogation = true;};
@@ -74,8 +61,6 @@ define([],function(){
           , _set = function(el,prop,val,ret,args){
               var e = new _changeEvent(el,prop,val,ret,args,'set'),
                   all = "*",
-                  parents = (el.parentElement !== undefined ? getParents(el,prop) : []),
-                  parentLength = parents.length,
                   allListeners = _attrListeners[all],
                   allListenersLength,
                   attrListeners = _attrListeners[prop],
@@ -112,26 +97,8 @@ define([],function(){
                   if(e._stopPropogation !== undefined) break loop;
                 }
               }
-            
-              if(parentLength > 0 && e._stopPropogation === undefined)
-              {
-                loop:for(x=0;x<parentLength;x++){
-                  var p = parents[x],
-                      attrparentListeners = p.kb_childAttrListeners()[prop],
-                      attrparentLength;
-                  if(attrparentListeners !== undefined)
-                  {
-                    attrparentLength = attrparentListeners.length;
-                    for(i=0;i<attrparentLength;i++)
-                    {
-                      e.child = el;
-                      e.target = p;
-                      attrparentListeners[i].call(p,e);
-                      if(e._stopPropogation !== undefined) break loop;
-                    }
-                  }
-                }  
-              }
+
+              _loopParents(el,prop,false,e);
 
               if(e._preventDefault !== undefined) return false;
 
@@ -141,8 +108,6 @@ define([],function(){
           , _update = function(el,prop,val,ret,args,action){
             var e = new _changeEvent(el,prop,val,ret,args,action,'update'),
                 all = "*",
-                parents = (el.parentElement !== undefined ? getParents(el,prop,true) : []),
-                parentLength = parents.length,
                 allListeners = _attrUpdateListeners[all],
                 allListenersLength,
                 attrListeners = _attrUpdateListeners[prop],
@@ -180,24 +145,7 @@ define([],function(){
               }
             }
             
-            if(parentLength > 0 && e._stopPropogation === undefined)
-            {
-              loop:for(x=0;x<parentLength;x++){
-                var p = parents[x],
-                    attrParentListeners = p.kb_childAttrUpdateListeners()[prop],
-                    attrparentLength;
-                if(attrParentListeners !== undefined){
-                  attrparentLength = attrParentListeners.length;
-                  for(i=0;i<attrparentLength;i++)
-                  {
-                    e.child = el;
-                    e.target = p;
-                    attrParentListeners[i].call(p,e);
-                    if(e._stopPropogation !== undefined) break loop;
-                  } 
-                }
-              }  
-            }
+            _loopParents(el,prop,true,e);
 
             if(e._preventDefault !== undefined) return false;
 
@@ -658,10 +606,7 @@ define([],function(){
           var _descriptor = Object.getOwnPropertyDescriptor(el.style,key),
               _proto = el.style;
           
-          if(el.style.kb_bind === undefined)
-          {
-            el.style.kb_bind = {obj:el,proto:_proto,descriptors:{},set:undefined,update:undefined};
-          }
+          if(el.style.kb_bind === undefined) el.style.kb_bind = {obj:el,proto:_proto,descriptors:{},set:undefined,update:undefined};
           el.style.kb_bind.set = (set ? set : _injected[_injectName].set);
           el.style.kb_bind.update = (update ? update : _injected[_injectName].update);
 
@@ -709,22 +654,18 @@ define([],function(){
         {
           if(this.toString() !== Bind.toString())
           {
-            if(this.kb_attrListeners()[attr] === undefined)
-            {
-              this.kb_attrListeners()[attr] = [];
-            }
-            if(child && this.kb_childAttrListeners()[attr] === undefined)
-            {
-              this.kb_childAttrListeners()[attr] = [];
-            }
+            /* we have a personal element binding */
             if(typeof func === 'function')
             {
               if(child)
               {
+
+                if(child && this.kb_childAttrListeners()[attr] === undefined) this.kb_childAttrListeners()[attr] = [];
                 this.kb_childAttrListeners()[attr].push(func);
               }
               else
               {
+                if(this.kb_attrListeners()[attr] === undefined) this.kb_attrListeners()[attr] = [];
                 this.kb_attrListeners()[attr].push(func);
               }
             }
@@ -732,12 +673,10 @@ define([],function(){
           }
           else
           {
-            if(_attrListeners[attr] === undefined)
-            {
-              _attrListeners[attr] = [];
-            }
+            /* this is a global binding */
             if(typeof func === 'function')
             {
+              if(_attrListeners[attr] === undefined) _attrListeners[attr] = [];
               _attrListeners[attr].push(func);
             }
             return Bind;
@@ -759,22 +698,16 @@ define([],function(){
         {
           if(this.toString() !== Bind.toString())
           {
-            if(this.kb_attrUpdateListeners()[attr] === undefined)
-            {
-              this.kb_attrUpdateListeners()[attr] = [];
-            }
-            if(child && this.kb_childAttrUpdateListeners()[attr] === undefined)
-            {
-              this.kb_childAttrUpdateListeners()[attr] = [];  
-            }
             if(typeof func === 'function')
             {
               if(child)
               {
+                if(child && this.kb_childAttrUpdateListeners()[attr] === undefined) this.kb_childAttrUpdateListeners()[attr] = [];
                 this.kb_childAttrUpdateListeners()[attr].push(func);
               }
               else
               {
+                if(this.kb_attrUpdateListeners()[attr] === undefined) this.kb_attrUpdateListeners()[attr] = [];
                 this.kb_attrUpdateListeners()[attr].push(func);
               }
             }
@@ -782,12 +715,9 @@ define([],function(){
           }
           else
           {
-            if(_attrUpdateListeners[attr] === undefined)
-            {
-              _attrUpdateListeners[attr] = [];
-            }
             if(typeof func === 'function')
             {
+              if(_attrUpdateListeners[attr] === undefined) _attrUpdateListeners[attr] = [];
               _attrUpdateListeners[attr].push(func);
             }
             return Bind;

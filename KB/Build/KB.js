@@ -1,3 +1,10 @@
+/* ways to speed up code */
+/*
+   1. style listeners are added on demand
+   2. getParents executes them as they are retrieved rather than seperate loop
+*/
+
+
 var CreateKB = (function(){
 	function CreateKB(){
 
@@ -13,21 +20,31 @@ var CreateKB = (function(){
           , x
         // used in all inner loops
           , i
-        //travels up the dom return back all parents with child listeners
-          , getParents = function(el,attr,update){
-            var parents = [],
-                x = 0,
-                type = (update ? "kb_childAttrUpdateListeners" : "kb_childAttrListeners");
-              /* Fancily this is more speedy than a while loop... */
-              for(x=0;el !== null;x=x){
-                el = el.parentElement;
-                if(el !== null && el[type]()[attr] !== undefined){
-                  parents[x] = el;
-                  x++;
+
+          , _loopParents = function(el,attr,update,e){
+            var x,
+                type = (update ? "kb_childAttrUpdateListeners" : "kb_childAttrListeners"),
+                attrListeners,
+                attrListenersLen;
+
+            e.child = el;
+            /* Fancily this is more speedy than a while loop... */
+            loop:for(x=0;(el !== null && el !== undefined);x=x){
+              el = el.parentElement;
+              if(el !== null && el !== undefined){
+                 attrListeners = el[type]()[attr];
+                if(attrListeners !== undefined){
+                  attrListenersLen = attrListeners.length;
+                  for(i=0;i<attrListenersLen;i++)
+                  {
+                    e.target = el;
+                    attrListeners[i].call(el,e);
+                    if(e._stopPropogation !== undefined) break loop;
+                  }
                 }
               }
-              return parents;
             }
+          }
         //the base event object that is passed to every listeners upon change
           , _changeEvent = function(el,attr,value,oldValue,args,action,type){
               this.stopPropagation = function(){this._stopPropogation = true;};
@@ -45,8 +62,6 @@ var CreateKB = (function(){
           , _set = function(el,prop,val,ret,args){
               var e = new _changeEvent(el,prop,val,ret,args,'set'),
                   all = "*",
-                  parents = (el.parentElement !== undefined ? getParents(el,prop) : []),
-                  parentLength = parents.length,
                   allListeners = _attrListeners[all],
                   allListenersLength,
                   attrListeners = _attrListeners[prop],
@@ -83,26 +98,8 @@ var CreateKB = (function(){
                   if(e._stopPropogation !== undefined) break loop;
                 }
               }
-            
-              if(parentLength > 0 && e._stopPropogation === undefined)
-              {
-                loop:for(x=0;x<parentLength;x++){
-                  var p = parents[x],
-                      attrparentListeners = p.kb_childAttrListeners()[prop],
-                      attrparentLength;
-                  if(attrparentListeners !== undefined)
-                  {
-                    attrparentLength = attrparentListeners.length;
-                    for(i=0;i<attrparentLength;i++)
-                    {
-                      e.child = el;
-                      e.target = p;
-                      attrparentListeners[i].call(p,e);
-                      if(e._stopPropogation !== undefined) break loop;
-                    }
-                  }
-                }  
-              }
+
+              _loopParents(el,prop,false,e);
 
               if(e._preventDefault !== undefined) return false;
 
@@ -112,8 +109,6 @@ var CreateKB = (function(){
           , _update = function(el,prop,val,ret,args,action){
             var e = new _changeEvent(el,prop,val,ret,args,action,'update'),
                 all = "*",
-                parents = (el.parentElement !== undefined ? getParents(el,prop,true) : []),
-                parentLength = parents.length,
                 allListeners = _attrUpdateListeners[all],
                 allListenersLength,
                 attrListeners = _attrUpdateListeners[prop],
@@ -151,24 +146,7 @@ var CreateKB = (function(){
               }
             }
             
-            if(parentLength > 0 && e._stopPropogation === undefined)
-            {
-              loop:for(x=0;x<parentLength;x++){
-                var p = parents[x],
-                    attrParentListeners = p.kb_childAttrUpdateListeners()[prop],
-                    attrparentLength;
-                if(attrParentListeners !== undefined){
-                  attrparentLength = attrParentListeners.length;
-                  for(i=0;i<attrparentLength;i++)
-                  {
-                    e.child = el;
-                    e.target = p;
-                    attrParentListeners[i].call(p,e);
-                    if(e._stopPropogation !== undefined) break loop;
-                  } 
-                }
-              }  
-            }
+            _loopParents(el,prop,true,e);
 
             if(e._preventDefault !== undefined) return false;
 
