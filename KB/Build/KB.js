@@ -1,7 +1,6 @@
 /* ways to speed up code */
 /*
    1. style listeners are added on demand
-   2. getParents executes them as they are retrieved rather than seperate loop
 */
 
 
@@ -15,11 +14,37 @@ var CreateKB = (function(){
         //holds all injected objects and thier descriptors, functions and set and update functions eg: {HTMLElement:{obj:HTMLElement,proto:HTMLElement.prototype,descriptors:{},functions:{},set:function(){},update:function(){}}}
           , _injected = {}
           
-          , _allStyles = Object.getOwnPropertyNames(document.all[0].style)
+          , _allStyles = Object.getOwnPropertyNames(document.body.style)
         //used in all for loops
           , x
         // used in all inner loops
           , i
+          , all = '*'
+
+          , _bindAllStyle = function(attr,els)
+            {
+              if(els === undefined)
+              {
+                els = Array.prototype.slice.call(document.body.querySelectorAll('*'));
+                els.unshift(document.body);
+              }
+              var x,
+                  elLength = els.length;
+              if(attr === '*'){
+                var _allStylesLen = _allStyles.length,
+                    i;
+                for(x=0;x<elLength;x++){
+                  for(i=0;i<_allStylesLen;i++){
+                    Bind.injectStyle(els[x],_allStyles[i],_set,_update);
+                  }
+                }
+              }
+              else{
+                for(x=0;x<elLength;x++){
+                  Bind.injectStyle(els[x],attr,_set,_update);
+                }
+              }
+            }
 
           , _loopParents = function(el,attr,update,e){
             var x,
@@ -61,7 +86,6 @@ var CreateKB = (function(){
         //the set function that runs on all changes
           , _set = function(el,prop,val,ret,args){
               var e = new _changeEvent(el,prop,val,ret,args,'set'),
-                  all = "*",
                   allListeners = _attrListeners[all],
                   allListenersLength,
                   attrListeners = _attrListeners[prop],
@@ -108,7 +132,6 @@ var CreateKB = (function(){
         //the update function that runs on all changes
           , _update = function(el,prop,val,ret,args,action){
             var e = new _changeEvent(el,prop,val,ret,args,action,'update'),
-                all = "*",
                 allListeners = _attrUpdateListeners[all],
                 allListenersLength,
                 attrListeners = _attrUpdateListeners[prop],
@@ -152,6 +175,54 @@ var CreateKB = (function(){
 
             return true;
           }
+
+          , _checkBindStyles = function(children)
+            {
+                var styles = Object.keys(_attrListeners).filter(function(v){
+                    return (_allStyles.indexOf(v) !== -1);
+                }).concat(Object.keys(_attrUpdateListeners).filter(function(v){
+                    return (_allStyles.indexOf(v) !== -1);
+                })),
+                x,
+                len = children.length,
+                i,
+                styleLen = styles.length;
+                for(i=0;i<styleLen;i++){
+                  for(x=0;x<len;x++){
+                    Bind.injectStyle(children[x],styles[i],_set,_update);
+                  }
+                }
+            }
+          , _checkParentStyles = function(children)
+            {
+              function getParents(child){
+                var x,
+                    el = child,
+                    styles = [];
+                loop:for(x=0;(el !== null && el !== undefined);x=x){
+                  el = el.parentElement;
+                  if(el !== null && el !== undefined){
+                    styles.concat(Object.keys(el.kb_childAttrListeners()).filter(function(v){
+                      return (_allStyles.indexOf(v) !== -1);
+                    })).concat(Object.keys(el.kb_childAttrUpdateListeners()).filter(function(v){
+                      return (_allStyles.indexOf(v) !== -1);
+                    }));
+                  }
+                }
+                return styles;
+              }
+
+              var styles = getParents(children[0]),
+                  x,
+                  len = children.length,
+                  i,
+                  styleLen = styles.length;
+              for(i=0;i<styleLen;i++){
+                for(x=0;x<len;x++){
+                  Bind.injectStyle(children[x],styles[i],_set,_update);
+                }
+              }
+            }
         /*** MAIN CONSTRUCTOR ***/
         function Bind()
         {
@@ -186,7 +257,14 @@ var CreateKB = (function(){
               inc[x].kb_addInputBoxBinding();
             }
             
-            bindStyles(all);
+            /* need to check for child updates from existing style listeners */
+            if(_attrListeners['*'].length > 0 || _attrUpdateListeners['*'].length > 0){
+              _bindAllStyle('*',all);
+            }
+            else{
+              _checkBindStyles(all);
+              _checkParentStyles(all);
+            }
           }
           
           function getAllInputs(inputs,textareas,e){
@@ -285,25 +363,6 @@ var CreateKB = (function(){
               inc[x].kb_addInputBoxBinding();
             }
           }
-          
-          function syncStyles()
-          {
-            var all = Array.prototype.slice.call(document.body.querySelectorAll('*'));
-            all.unshift(document.body);
-            bindStyles(all);
-          }
-          
-          function bindStyles(all){
-            var len = all.length,
-                allStyleLen = _allStyles.length;
-            for(var x=0;x<len;x++)
-            {
-              for(var i=0;i<allStyleLen;i++)
-              {
-                Bind.injectStyle(all[x],_allStyles[i],_set,_update);
-              }
-            }
-          }
 
           //checks attributes inside of setAttribute and removeAttribute
           
@@ -352,10 +411,7 @@ var CreateKB = (function(){
 
           Bind.addAttrUpdateListener('setAttribute',checkUpdateAttributes);
           Bind.addAttrUpdateListener('removeAttribute',checkUpdateAttributes);
-          
-          //initially adds all styles for watching
-          syncStyles();
-          
+
           //initially adds inputs for watching
           syncInputs();
         }
@@ -607,38 +663,39 @@ var CreateKB = (function(){
           var _descriptor = Object.getOwnPropertyDescriptor(el.style,key),
               _proto = el.style;
           
-          if(el.style.kb_bind === undefined)
-          {
+          if(el.style.kb_bind === undefined){
             el.style.kb_bind = {obj:el,proto:_proto,descriptors:{},set:undefined,update:undefined};
+            el.style.kb_bind.set = (set ? set : _injected[_injectName].set);
+            el.style.kb_bind.update = (update ? update : _injected[_injectName].update);
           }
-          el.style.kb_bind.set = (set ? set : _injected[_injectName].set);
-          el.style.kb_bind.update = (update ? update : _injected[_injectName].update);
-
-          el.style.kb_bind.descriptors[key] = _descriptor;
-          
-          if(_descriptor.value !== undefined && _descriptor.configurable)
+          if(el.style.kb_bind.descriptors[key] === undefined)
           {
-            Object.defineProperty(_proto,key,{
-                get:function()
-                {
-                  return _descriptor.value;
-                },
-                set:function(v)
-                {
-                    var oldValue = _descriptor.value;
-                    if(typeof el.style.kb_bind.set == 'function' && el.style.kb_bind.set(el,key,v,oldValue))
-                    {
-                      _descriptor.value = v;
-                      el.style.setProperty(key.replace(/([A-Z])/g, "-$1").replace('webkit','-webkit'),v);
-                    }
-                    if(typeof el.style.kb_bind.update === 'function')
-                    {
-                      el.style.kb_bind.update(el,key,v,oldValue);
-                    }
-                },
-                enumerable:true,
-                configurable:true
-            });
+            el.style.kb_bind.descriptors[key] = _descriptor;
+
+            if(_descriptor.value !== undefined && _descriptor.configurable)
+            {
+              Object.defineProperty(_proto,key,{
+                  get:function()
+                  {
+                    return _descriptor.value;
+                  },
+                  set:function(v)
+                  {
+                      var oldValue = _descriptor.value;
+                      if(typeof el.style.kb_bind.set == 'function' && el.style.kb_bind.set(el,key,v,oldValue))
+                      {
+                        _descriptor.value = v;
+                        el.style.setProperty(key.replace(/([A-Z])/g, "-$1").replace('webkit','-webkit'),v);
+                      }
+                      if(typeof el.style.kb_bind.update === 'function')
+                      {
+                        el.style.kb_bind.update(el,key,v,oldValue);
+                      }
+                  },
+                  enumerable:true,
+                  configurable:true
+              });
+            }
           }
           return Bind;
         }
@@ -658,36 +715,32 @@ var CreateKB = (function(){
         {
           if(this.toString() !== Bind.toString())
           {
-            if(this.kb_attrListeners()[attr] === undefined)
-            {
-              this.kb_attrListeners()[attr] = [];
-            }
-            if(child && this.kb_childAttrListeners()[attr] === undefined)
-            {
-              this.kb_childAttrListeners()[attr] = [];
-            }
+            /* we have a personal element binding */
             if(typeof func === 'function')
             {
               if(child)
               {
+
+                if(child && this.kb_childAttrListeners()[attr] === undefined) this.kb_childAttrListeners()[attr] = [];
                 this.kb_childAttrListeners()[attr].push(func);
               }
               else
               {
+                if(this.kb_attrListeners()[attr] === undefined) this.kb_attrListeners()[attr] = [];
                 this.kb_attrListeners()[attr].push(func);
               }
+              if(_allStyles.indexOf(attr) !== -1) _bindAllStyle(attr,(child ? this.querySelector('*') : [this]));
             }
             return this;
           }
           else
           {
-            if(_attrListeners[attr] === undefined)
-            {
-              _attrListeners[attr] = [];
-            }
+            /* this is a global binding */
             if(typeof func === 'function')
             {
+              if(_attrListeners[attr] === undefined) _attrListeners[attr] = [];
               _attrListeners[attr].push(func);
+              if(attr === '*' || _allStyles.indexOf(attr) !== -1) _bindAllStyle(attr);
             }
             return Bind;
           }
@@ -708,22 +761,16 @@ var CreateKB = (function(){
         {
           if(this.toString() !== Bind.toString())
           {
-            if(this.kb_attrUpdateListeners()[attr] === undefined)
-            {
-              this.kb_attrUpdateListeners()[attr] = [];
-            }
-            if(child && this.kb_childAttrUpdateListeners()[attr] === undefined)
-            {
-              this.kb_childAttrUpdateListeners()[attr] = [];  
-            }
             if(typeof func === 'function')
             {
               if(child)
               {
+                if(child && this.kb_childAttrUpdateListeners()[attr] === undefined) this.kb_childAttrUpdateListeners()[attr] = [];
                 this.kb_childAttrUpdateListeners()[attr].push(func);
               }
               else
               {
+                if(this.kb_attrUpdateListeners()[attr] === undefined) this.kb_attrUpdateListeners()[attr] = [];
                 this.kb_attrUpdateListeners()[attr].push(func);
               }
             }
@@ -731,12 +778,9 @@ var CreateKB = (function(){
           }
           else
           {
-            if(_attrUpdateListeners[attr] === undefined)
-            {
-              _attrUpdateListeners[attr] = [];
-            }
             if(typeof func === 'function')
             {
+              if(_attrUpdateListeners[attr] === undefined) _attrUpdateListeners[attr] = [];
               _attrUpdateListeners[attr].push(func);
             }
             return Bind;

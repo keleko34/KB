@@ -92,6 +92,12 @@
         subChild1.style.background = "#000";
       }
 
+      for(x=0;x<1000;x++){
+        var div = document.createElement('div');
+        div.className = "sub";
+        subChild1.appendChild(div);
+      }
+
       subChild1.className = 'something';
       subChild1.setAttribute('class','cool');
 
