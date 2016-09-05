@@ -20,6 +20,7 @@ var CreateKB = (function(){
         // used in all inner loops
           , i
           , all = '*'
+          , _hasBindedStyle = false
 
           , _bindAllStyle = function(attr,els)
             {
@@ -258,10 +259,10 @@ var CreateKB = (function(){
             }
             
             /* need to check for child updates from existing style listeners */
-            if(_attrListeners['*'].length > 0 || _attrUpdateListeners['*'].length > 0){
+            if((_attrListeners['*'] !== undefined && _attrListeners['*'].length > 0) || (_attrUpdateListeners['*'] !== undefined && _attrUpdateListeners['*'].length > 0)){
               _bindAllStyle('*',all);
             }
-            else{
+            else if(_hasBindedStyle){
               _checkBindStyles(all);
               _checkParentStyles(all);
             }
@@ -729,7 +730,10 @@ var CreateKB = (function(){
                 if(this.kb_attrListeners()[attr] === undefined) this.kb_attrListeners()[attr] = [];
                 this.kb_attrListeners()[attr].push(func);
               }
-              if(_allStyles.indexOf(attr) !== -1) _bindAllStyle(attr,(child ? this.querySelector('*') : [this]));
+              if(_allStyles.indexOf(attr) !== -1){
+                _hasBindedStyle = true;
+                _bindAllStyle(attr,(child ? this.querySelector('*') : [this]));
+              }
             }
             return this;
           }
@@ -740,7 +744,10 @@ var CreateKB = (function(){
             {
               if(_attrListeners[attr] === undefined) _attrListeners[attr] = [];
               _attrListeners[attr].push(func);
-              if(attr === '*' || _allStyles.indexOf(attr) !== -1) _bindAllStyle(attr);
+              if(attr === '*' || _allStyles.indexOf(attr) !== -1){
+                _hasBindedStyle = true;
+                _bindAllStyle(attr);
+              }
             }
             return Bind;
           }
@@ -773,6 +780,10 @@ var CreateKB = (function(){
                 if(this.kb_attrUpdateListeners()[attr] === undefined) this.kb_attrUpdateListeners()[attr] = [];
                 this.kb_attrUpdateListeners()[attr].push(func);
               }
+              if(_allStyles.indexOf(attr) !== -1){
+                _hasBindedStyle = true;
+                _bindAllStyle(attr,(child ? this.querySelector('*') : [this]));
+              }
             }
             return this;
           }
@@ -782,6 +793,10 @@ var CreateKB = (function(){
             {
               if(_attrUpdateListeners[attr] === undefined) _attrUpdateListeners[attr] = [];
               _attrUpdateListeners[attr].push(func);
+              if(attr === '*' || _allStyles.indexOf(attr) !== -1){
+                _hasBindedStyle = true;
+                _bindAllStyle(attr);
+              }
             }
             return Bind;
           }
