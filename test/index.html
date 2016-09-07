@@ -20,81 +20,93 @@
     </div>
     
     <script type="text/javascript">
-      var testDisplay = document.getElementById('testDisplay');
-      var testInput = document.getElementById('testInput');
-      var textAreaInput = document.getElementById('testTextarea');
-      var parent = document.getElementById('parent');
-      var subChild1 = document.getElementById('subchild1');
-      var kb = CreateKB();
+      var testDisplay = document.getElementById('testDisplay'),
+            testInput = document.getElementById('testInput'),
+            textAreaInput = document.getElementById('testTextarea'),
+            parent = document.getElementById('parent'),
+            subChild1 = document.getElementById('subchild1'),
+            kb = kb();
 
-      testInput.addAttrListener('value',function(e){
-        console.log(e);
-        if(e.value === 'cool')
-        {
+        kb.addAttrListener("checked",function(e){
+          console.log(e);
+        })
+        .addAttrListener('value',function(e){
+          if(e.value === 'cool')
+          {
+            e.preventDefault();
+            return;
+          }
+          testDisplay.innerHTML = e.value;
+        })
+        .addAttrListener('appendChild',function(e){
+          //console.log(e);
+        })
+        .addAttrListener('innerHTML',function(e){
+          //console.log(e); //fires when input value changes
+        })
+        .addAttrListener('add',function(e){
+          //console.log(e);
+          if(e.arguments[0]+e.arguments[1] === 10)
+          {
+            e.preventDefault();
+          }
+        })
+        .addAttrListener("*",function(e){
+          //console.log(e);
+        })
+        .addAttrListener("class",function(e){
+          if(e.value === 'cool') e.preventDefault();
+        })
+        .addAttrListener("cool",function(e){
+          //console.log('tying to set cool');
           e.preventDefault();
-          return;
-        }
-        testDisplay.innerHTML = e.value;
-      })
-      textAreaInput.addAttrListener('value',function(e){
-        console.log(e);
-      });
-      kb.addAttrListener("checked",function(e){
-        console.log(e);
-      })
-      .addAttrListener('appendChild',function(e){
-        console.log(e);
-      })
-      .addAttrListener('innerHTML',function(e){
-        console.log(e); //fires when input value changes
-      })
-      .addAttrListener('add',function(e){
-        console.log(e);
-        if(e.arguments[0]+e.arguments[1] === 10)
-        {
+        })
+
+        parent.addChildAttrListener('background',function(e){
+          //if(e.child.id !== 'subchild1') console.log("preventing",e.child);
           e.preventDefault();
+        })
+        .addChildAttrListener('innerHTML',function(e){
+          //if(e.child.id !== 'subchild1') console.log('appending',e.value,' to ',e.child);
+        })
+
+        function myObject(){};
+
+        myObject.prototype.add = function(a,b){return a+b;};
+
+        kb.binder.injectPrototypes(myObject);
+
+        var x = 0;
+
+        var test = new myObject();
+        var out = test.add(5,5);
+        console.log(out);
+
+        for(x=0;x<1000;x++){
+          parent.setAttribute('cool','something')
         }
-      })
-      .addAttrListener("*",function(e){
-        console.log(e);
-      })
-      .addAttrListener("class",function(e){
-        if(e.value === 'cool') e.preventDefault();
-      })
-      
-      parent.addChildAttrListener('background',function(e){
-        console.log("preventing",e.child);
-        e.preventDefault();
-      });
 
-      function myObject(){};
+        for(x=0;x<1000;x++){
+          subChild1.innerHTML = Math.random();
+        }
 
-      myObject.prototype.add = function(a,b){return a+b;};
+        for(x=0;x<1000;x++){
+          subChild1.style.background = "#000";
+        }
 
-      kb.injectPrototypes(myObject);
+        subChild1.className = 'something';
+        subChild1.setAttribute('class','cool');
 
-      kb();
-      var x = 0;
+        for(x=0;x<10;x++){
+          subChild1.appendChild(document.createElement('div'));
+          subChild1.children[(subChild1.children.length-1)].style.background = '#F00';
+          subChild1.children[(subChild1.children.length-1)].innerHTML = 'text';
+        }
 
-      var test = new myObject();
-      var out = test.add(5,5);
-      console.log(out);
-      
-      for(x=0;x<1000;x++){
-        parent.setAttribute('cool','something')
-      }
-      
-      for(x=0;x<1000;x++){
-        subChild1.innerHTML = Math.random();
-      }
-      
-      for(x=0;x<1000;x++){
-        subChild1.style.background = "#000";
-      }
-
-      subChild1.className = 'something';
-      subChild1.setAttribute('class','cool');
-
+        for(x=0;x<2;x++){
+          subChild1.appendChild(document.createElement('input'));
+          subChild1.children[(subChild1.children.length-1)].style.background = '#F00';
+        }
     </script>
   </body>
 </html>
