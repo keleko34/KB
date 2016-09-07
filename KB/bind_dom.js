@@ -14,10 +14,79 @@ define([],function(){
 
       _allStyles = Object.getOwnPropertyNames(document.body.style),
 
+      x,
+
+      i,
+
       _set = function(el,prop,val,ret,args)
       {
         var e = new _changeEvent(el,prop,val,ret,args,undefined,'set');
-        console.log(e);
+
+        if(_attrListeners[_all] !== undefined)
+        {
+          loopListener(_attrListeners[_all],e);
+          if(e._stopPropogation === undefined)
+          {
+            loopListener(_styleListeners[_all],e);
+          }
+        }
+
+        if(e._stopPropogation === undefined && _attrListeners[prop] !== undefined)
+        {
+          loopListener(_attrListeners[prop],e);
+        }
+
+        if(e._stopPropogation === undefined && _styleListeners[prop] !== undefined)
+        {
+          loopListener(_styleListeners[prop],e);
+        }
+
+        if(el.__kb !== undefined)
+        {
+          var localAttrListeners = el.__kb._attrListeners,
+              localStyleListeners = el.__kb._styleListeners,
+              localParentAttrListeners = el.__kb._parentAttrListeners,
+              localParentStyleListeners = el.__kb._parentStyleListeners;
+
+          if(e._stopPropogation === undefined && localAttrListeners[_all] !== undefined)
+          {
+            loopListener(localAttrListeners[_all],e);
+            if(e._stopPropogation === undefined)
+            {
+              loopListener(localStyleListeners[_all],e);
+            }
+          }
+
+          if(e._stopPropogation === undefined && localAttrListeners[prop] !== undefined)
+          {
+            loopListener(localAttrListeners[prop],e);
+          }
+
+          if(e._stopPropogation === undefined && localStyleListeners[prop] !== undefined)
+          {
+            loopListener(localStyleListeners[prop],e);
+          }
+
+          if(e._stopPropogation === undefined && localParentAttrListeners[_all] !== undefined)
+          {
+            loopParentListener(localParentAttrListeners[_all],e);
+
+            if(e._stopPropogation === undefined)
+            {
+              loopParentListener(localParentStyleListeners[_all],e);
+            }
+          }
+
+          if(e._stopPropogation === undefined && localParentAttrListeners[prop] !== undefined)
+          {
+            loopParentListener(localParentAttrListeners[prop],e);
+          }
+
+          if(e._stopPropogation === undefined && localParentStyleListeners[prop] !== undefined)
+          {
+            loopParentListener(localParentStyleListeners[prop],e);
+          }
+        }
 
         if(e._preventDefault !== undefined) return false;
 
@@ -28,10 +97,104 @@ define([],function(){
       {
         var e = new _changeEvent(el,prop,val,ret,args,action,'update');
 
+        if(_attrUpdateListeners[_all] !== undefined)
+        {
+          loopListener(_attrUpdateListeners[_all],e);
+          if(e._stopPropogation === undefined)
+          {
+            loopListener(_styleUpdateListeners[_all],e);
+          }
+        }
+
+        if(e._stopPropogation === undefined && _attrUpdateListeners[prop] !== undefined)
+        {
+          loopListener(_attrUpdateListeners[prop],e);
+        }
+
+        if(e._stopPropogation === undefined && _styleUpdateListeners[prop] !== undefined)
+        {
+          loopListener(_styleUpdateListeners[prop],e);
+        }
+
+        if(el.__kb !== undefined)
+        {
+          var localAttrListeners = el.__kb._attrUpdateListeners,
+              localStyleListeners = el.__kb._styleUpdateListeners,
+              localParentAttrListeners = el.__kb._parentAttrUpdateListeners,
+              localParentStyleListeners = el.__kb._parentStyleUpdateListeners;
+
+          if(e._stopPropogation === undefined && localAttrListeners[_all] !== undefined)
+          {
+            loopListener(localAttrListeners[_all],e);
+            if(e._stopPropogation === undefined)
+            {
+              loopListener(localStyleListeners[_all],e);
+            }
+          }
+
+          if(e._stopPropogation === undefined && localAttrListeners[prop] !== undefined)
+          {
+            loopListener(localAttrListeners[prop],e);
+          }
+
+          if(e._stopPropogation === undefined && localStyleListeners[prop] !== undefined)
+          {
+            loopListener(localStyleListeners[prop],e);
+          }
+
+          if(e._stopPropogation === undefined && localParentAttrListeners[_all] !== undefined)
+          {
+            loopParentListener(localParentAttrListeners[_all],e);
+
+            if(e._stopPropogation === undefined)
+            {
+              loopParentListener(localParentStyleListeners[_all],e);
+            }
+          }
+
+          if(e._stopPropogation === undefined && localParentAttrListeners[prop] !== undefined)
+          {
+            loopParentListener(localParentAttrListeners[prop],e);
+          }
+
+          if(e._stopPropogation === undefined && localParentStyleListeners[prop] !== undefined)
+          {
+            loopParentListener(localParentStyleListeners[prop],e);
+          }
+        }
+
         if(e._preventDefault !== undefined) return false;
 
         return true;
       }
+
+  function loopListener(looper,e)
+  {
+    var _looper = looper,
+        _len = looper.length,
+        _e = e,
+        _x;
+    for(_x=0;_x<_len;_x++)
+    {
+      looper[_x](_e);
+      if(_e._stopPropogation !== undefined) break;
+    }
+  }
+
+  function loopParentListener(looper,e)
+  {
+    var _looper = looper,
+        _len = looper.length,
+        _e = e,
+        _x;
+    for(_x=0;_x<_len;_x++)
+    {
+      _e.child = _e.target;
+      _e.target = looper[_x].parent;
+      looper[_x].func(_e);
+      if(_e._stopPropogation !== undefined) break;
+    }
+  }
 
   function _changeEvent(el,attr,value,oldValue,args,action,type)
   {
@@ -53,10 +216,6 @@ define([],function(){
     this._attrUpdateListeners = {};
     this._styleListeners = {};
     this._styleUpdateListeners = {};
-    this._childAttrListeners = {};
-    this._childAttrUpdateListeners = {};
-    this._childStyleListeners = {};
-    this._childStyleUpdateListeners = {};
     this._parentStyleListeners = {};
     this._parentStyleUpdateListeners = {};
     this._parentAttrListeners = {};
@@ -73,8 +232,300 @@ define([],function(){
     bind.injectPrototypes(HTMLTextAreaElement,'HTMLTextAreaElement');
     bind.injectPrototypes(Document,'Document');
 
+    var __set = _set,
+        __update = _update;
+
+    function hasInput(attrListeners)
+    {
+      var attrs = ['value','checked'],
+          _localListeners = attrListeners,
+          _localAttr = _localListeners._attrListeners,
+          _localUpdateAttr = _localListeners._attrUpdateListeners,
+          _localParentAttr = _localListeners._parentAttrListeners,
+          _localParentUpdateAttr = _localListeners._parentAttrUpdateListeners,
+          has = false;
+
+      if(_attrListeners[_all] !== undefined || _attrUpdateListeners[_all] !== undefined)
+      {
+        has = true;
+      }
+      if(has !== true && _localAttr[_all] !== undefined ||
+         _localUpdateAttr[_all] !== undefined ||
+         _localParentAttr[_all] !== undefined ||
+         _localParentUpdateAttr[_all] !== undefined)
+      {
+        has = true;
+      }
+      if(has !== true)
+      {
+        for(var x=0;x<attrs.length;x++)
+        {
+          if(_attrListeners[attrs[x]] !== undefined ||
+             _attrUpdateListeners[attrs[x]] !== undefined ||
+             _localAttr[attrs[x]] !== undefined ||
+             _localUpdateAttr[attrs[x]] !== undefined ||
+             _localParentAttr[attrs[x]] !== undefined ||
+             _localParentUpdateAttr[attrs[x]] !== undefined)
+            {
+              has = true;
+              break;
+            }
+        }
+      }
+      return has;
+    }
+
+    function getStyles(arr,styles)
+    {
+      var x,
+          _arr = arr,
+          _styles = styles,
+          len = styles.length;
+      for(x=0;x<len;x++)
+      {
+        if(_arr.indexOf(_styles[x]) === -1)
+        {
+          _arr.push(_styles[x]);
+        }
+      }
+      return _arr;
+    }
+
+    function hasStyle(attrListeners)
+    {
+      var _globalStyle = Object.keys(_styleListeners),
+          _globalStyleUpdate = Object.keys(_styleUpdateListeners),
+          _localListeners = attrListeners,
+          _localStyle = Object.keys(_localListeners._styleListeners),
+          _localUpdateStyle = Object.keys(_localListeners._styleUpdateListeners),
+          _localParentStyle = Object.keys(_localListeners._parentStyleListeners),
+          _localParentUpdateStyle = Object.keys(_localListeners._parentStyleUpdateListeners),
+          has = [];
+
+      if(_globalStyle.length !== 0 ||
+         _globalStyleUpdate.length !== 0)
+      {
+        has = getStyles(has,_globalStyle);
+        has = getStyles(has,_globalStyleUpdate);
+      }
+      if(has.length !== 0 && _localParentStyle.length !== 0 ||
+         _localParentUpdateStyle.length !== 0)
+      {
+        has = getStyles(has,_localParentStyle);
+        has = getStyles(has,_localParentUpdateStyle);
+      }
+      if(has.indexOf(_all) !== -1) has = _allStyles;
+      return has;
+    }
+
+    function reSync(e)
+    {
+      var attrListeners = e.target.attrListeners(),
+          _hasInput = hasInput(attrListeners),
+          _hasStyle = hasStyle(attrListeners),
+          _hasStyleLen = _hasStyle.length,
+          _parentAttr,
+          _parentAttrUpdate,
+          _parentStyle,
+          _parentStyleUpdate,
+          _listeners,
+          nodes = [],
+          len,
+          outer = ((e.attr === 'outerHTML' || e.attr === 'outerText') ? e.attr : undefined),
+          target = e.target
+
+      if(outer !== undefined)
+      {
+        e.attr = 'appendChild',
+        e.arguments = [e.target];
+        e.target = e.target.parentElement;
+      }
+
+      if(_hasInput)
+      {
+        if(e.attr === 'appendChild')
+        {
+          nodes = Array.prototype.slice.call(e.arguments[0].querySelectorAll('input,textarea'));
+          if(e.arguments[0].tagName === 'INPUT' || e.arguments[0].tagName === 'TEXTAREA')
+          {
+            nodes.unshift(e.arguments[0])
+          }
+        }
+        else
+        {
+          nodes = Array.prototype.slice.call(e.target.querySelectorAll('input,textarea'));
+        }
+        len = nodes.length;
+        for(var x=0;x<len;x++)
+        {
+          if(nodes[x].addInputBinding !== undefined) nodes[x].addInputBinding();
+          if(nodes[x].addInputBoxBinding !== undefined) nodes[x].addInputBoxBinding();
+        }
+      }
+
+      if(e.attr === 'appendChild')
+      {
+        nodes = Array.prototype.slice.call(e.arguments[0].querySelectorAll('*'));
+        nodes.unshift(e.arguments[0]);
+        _parentAttr = e.target.__kb._parentAttrListeners;
+        _parentAttrUpdate = e.target.__kb._parentAttrUpdateListeners;
+        _parentStyle = e.target.__kb._parentStyleListeners;
+        _parentStyleUpdate = e.target.__kb._parentStyleUpdateListeners;
+      }
+      else
+      {
+        nodes = Array.prototype.slice.call(e.target.querySelectorAll('*'));
+        _parentAttr = e.target.__kb._parentAttrListeners;
+        _parentAttrUpdate = e.target.__kb._parentAttrUpdateListeners;
+        _parentStyle = e.target.__kb._parentStyleListeners;
+        _parentStyleUpdate = e.target.__kb._parentStyleUpdateListeners;
+      }
+      len = nodes.length;
+
+        for(var x=0;x<len;x++)
+        {
+          if(_hasStyleLen !== 0)
+          {
+            for(var i=0;i<_hasStyleLen;i++)
+            {
+              bind.injectStyleProperty(nodes[x],_hasStyle[i]);
+            }
+          }
+          _listeners = nodes[x].attrListeners();
+          _listeners._parentAttrListeners = _parentAttr;
+          _listeners._parentAttrUpdateListeners = _parentAttrUpdate;
+          _listeners._parentStyleListeners = _parentStyle;
+          _listeners._parentStyleUpdateListeners = _parentStyleUpdate;
+        }
+
+      if(outer !== undefined)
+      {
+        e.attr = outer;
+        e.target = target;
+        e.arguments = [];
+      }
+    }
+
+    function checkAttr(e)
+    {
+      var oldAttr = e.target.attributes[e.arguments[0]],
+          old = (oldAttr !== undefined ? oldAttr.value : ""),
+          val = (e.attr === 'setAttribute' ? e.arguments[1] : "");
+        if(!__set(e.target,e.arguments[0],val,old,[val])){
+          e.preventDefault();
+        }
+    }
+
+    function checkAttrUpdate(e)
+    {
+      var oldAttr = e.target.attributes[e.arguments[0]],
+          old = (oldAttr !== undefined ? oldAttr.value : ""),
+          val = (e.attr === 'setAttribute' ? e.arguments[1] : "");
+          __update(e.target,e.arguments[0],val,old,[val]);
+    }
+
+    //for keeping binds with inputs
+    bind.addAttrUpdateListener('appendChild',reSync);
+    bind.addAttrUpdateListener('removeChild',reSync);
+    bind.addAttrUpdateListener('innerHTML',reSync);
+    bind.addAttrUpdateListener('outerHTML',reSync);
+    bind.addAttrUpdateListener('innerText',reSync);
+    bind.addAttrUpdateListener('outerText',reSync);
+    bind.addAttrUpdateListener('textContent',reSync);
+
+    //allows for html attribute changes to be listened to just like properties
+    bind.addAttrListener('setAttribute',checkAttr);
+    bind.addAttrListener('removeAttribute',checkAttr);
+
+    bind.addAttrUpdateListener('setAttribute',checkAttrUpdate);
+    bind.addAttrUpdateListener('removeAttribute',checkAttrUpdate);
 
     return bind;
+  }
+
+  function setStandard(descriptor,key,set,update)
+  {
+    var _descriptor = descriptor,
+        _descGet = _descriptor.get,
+        _descSet = _descriptor.set,
+        _key = key,
+        _set = set,
+        _update = update,
+        _oldValue;
+    return function standardSet(v)
+    {
+       _oldValue = _descGet.call(this);
+       if(_set(this,_key,v,_oldValue))
+       {
+         _descSet.call(this,v);
+       }
+       _update(this,_key,v,_oldValue);
+    }
+  }
+
+  function setValue(descriptor,key,set,update)
+  {
+    var _descriptor = descriptor,
+        _key = key,
+        _set = set,
+        _update = update,
+        _oldValue;
+    return function valueSet(v)
+    {
+      _oldValue = _descriptor.value;
+      if(_set(this,_key,v,_oldValue,arguments))
+      {
+        _descriptor.value = v;
+      }
+      _update(this,_key,v,_oldValue,arguments);
+    }
+  }
+
+  function setFunction(descriptor,key,set,update)
+  {
+    var _descriptor = descriptor,
+        _descVal = _descriptor.value,
+        _key = key,
+        _set = set,
+        _update = update,
+        _action;
+    return function functionSet()
+    {
+      if(_set(this,_key,null,null,arguments))
+      {
+        _action = _descVal.apply(this,arguments);
+      }
+      _update(this,_key,null,null,arguments,_action);
+      return _action;
+    }
+  }
+
+  function setStyle(descriptor,key,set,update,el)
+  {
+    var _proto = el.style,
+        _descriptor = descriptor,
+        _key = key,
+        _keyCP = key.replace(/([A-Z])/g, "-$1").replace('webkit','-webkit'),
+        _set = set,
+        _update = update,
+        _el = el,
+        _oldValue,
+        _value;
+    return {
+      get:function(){return _value;},
+      set:function styleSet(v)
+      {
+        _oldValue = _value;
+        if(_set(_el,_key,v,_oldValue))
+        {
+          _value = v;
+          _proto.setProperty(_keyCP,v);
+        }
+        _update(_el,_key,v,_oldValue);
+      },
+      enumerable:true,
+      configurable:true
+    }
   }
 
   bind.injectPrototypeProperty = function(obj,key,injectName,set,update)
@@ -86,10 +537,10 @@ define([],function(){
         __set = (set || _set),
         __update = (update || _update);
 
-    if(_proto.kb === undefined)
+    if(_proto.attrListeners === undefined)
     {
-      _proto.kb = {};
-      _proto.kb.attrListeners = (function()
+      _proto = {};
+      _proto.attrListeners = (function()
       {
         if(this.__kb === undefined)
         {
@@ -123,15 +574,7 @@ define([],function(){
       {
          Object.defineProperty(_proto,key,{
            get:_descriptor.get,
-           set:function(v)
-           {
-              var oldValue = _descriptor.get.apply(this);
-              if(_injectedObj.set(this,key,v,oldValue,arguments))
-              {
-                _descriptor.set.apply(this,arguments);
-              }
-              _injectedObj.update(this,key,v,oldValue,arguments);
-           },
+           set:setStandard(_descriptor,key,__set,__update),
            enumerable:true,
            configurable:true
          });
@@ -139,16 +582,7 @@ define([],function(){
       else if(typeof _descriptor.value === 'function')
       {
           Object.defineProperty(_proto,key,{
-            value:function()
-            {
-              var action;
-              if(_injectedObj.set(this,key,null,null,arguments))
-              {
-                action = _descriptor.value.apply(this,arguments);
-              }
-              _injectedObj.update(this,key,null,null,arguments,action);
-              return action;
-            },
+            value:setFunction(_descriptor,key,__set,__update),
             writable:true,
             enumerable:true,
             configurable:true
@@ -161,15 +595,7 @@ define([],function(){
           {
             return _descriptor.value;
           },
-          set:function(v)
-          {
-            var oldValue = _descriptor.value;
-            if(_injectedObj.set(this,key,v,oldValue,arguments))
-            {
-              _descriptor.value = v;
-            }
-            _injectedObj.update(this,key,v,oldValue,arguments);
-          },
+          set:setValue(_descriptor,key,__set,__update),
           enumerable:true,
           configurable:true
         });
@@ -182,40 +608,23 @@ define([],function(){
   {
     var _proto = el.style,
         _descriptor = Object.getOwnPropertyDescriptor(_proto,key),
-        _injectedObj = el.kb.attrListeners().injectedStyle,
+        _injectedObj = el.attrListeners().injectedStyle,
         __set = (set || _set),
         __update = (update || _update);
 
     if(_injectedObj === undefined)
     {
-      el.kb.attrListeners().injectedStyle = {obj:el,proto:_proto,descriptors:{},set:undefined,update:undefined};
-      el.kb.attrListeners().injectedStyle.set = __set;
-      el.kb.attrListeners().injectedStyle.update = __update;
-      _injectedObj = el.kb.attrListeners().injectedStyle;
+      el.attrListeners().injectedStyle = {obj:el,proto:_proto,descriptors:{},set:undefined,update:undefined};
+      el.attrListeners().injectedStyle.set = __set;
+      el.attrListeners().injectedStyle.update = __update;
+      _injectedObj = el.attrListeners().injectedStyle;
     }
 
     if(_injectedObj.descriptors[key] === undefined) _injectedObj.descriptors[key] = _descriptor;
 
     if(_descriptor.configurable)
     {
-      Object.defineProperty(_proto,key,{
-        get:function()
-        {
-          return _descriptor.value;
-        },
-        set:function(v)
-        {
-          var oldValue = _descriptor.value;
-          if(_injectedObj.set(el,key,v,oldValue))
-          {
-            _descriptor.value = v;
-            el.style.setProperty(key.replace(/([A-Z])/g, "-$1").replace('webkit','-webkit'),v)
-          }
-          _injectedObj.update(el,key,v,oldValue);
-        },
-        enumerable:true,
-        configurable:true
-      });
+      Object.defineProperty(_proto,key,setStyle(_descriptor,key,__set,__update,el));
     }
     return bind;
   }
@@ -231,17 +640,16 @@ define([],function(){
         _descriptors,
         x;
 
-    if(_proto.kb === undefined)
+    if(_proto.attrListeners === undefined)
     {
-      _proto.kb = {};
-      _proto.kb.attrListeners = (function()
+      _proto.attrListeners = function()
       {
         if(this.__kb === undefined)
         {
           this.__kb = new _localBinders();
         }
         return this.__kb;
-      }).bind(_proto)
+      }
       _proto.addAttrListener = bind.addAttrListener;
       _proto.addAttrUpdateListener = bind.addAttrUpdateListener;
       _proto.addChildAttrListener = addChildAttrListener;
@@ -309,25 +717,25 @@ define([],function(){
 
       }
 
-      _proto.kb.removeInputBinding = (function(){
-        this.kb.attrListeners()._onkeydown = undefined;
+      _proto.removeInputBinding = function(){
+        this.attrListeners()._onkeydown = undefined;
         this.removeEventListener('keydown',keyDown);
-      }).bind(_proto)
+      }
 
-      _proto.kb.addInputBinding = (function(){
-        this.kb.attrListeners()._onkeydown = true;
+      _proto.addInputBinding = function(){
+        this.attrListeners()._onkeydown = true;
         this.addEventListener('keydown',keyDown);
-      }).bind(_proto)
+      }
 
-      _proto.kb.removeInputBoxBinding = (function(){
-        this.kb.attrListeners()._onmousedown = undefined;
+      _proto.removeInputBoxBinding = function(){
+        this.attrListeners()._onmousedown = undefined;
         this.removeEventListener('mouseup',keyDown);
-      }).bind(_proto)
+      }
 
-      _proto.kb.addInputBoxBinding = (function(){
-        this.kb.attrListeners()._onmousedown = true;
-        this.removeEventListener('mouseup',keyDown);
-      }).bind(_proto)
+      _proto.addInputBoxBinding = function(){
+        this.attrListeners()._onmousedown = true;
+        this.addEventListener('mouseup',keyDown);
+      }
     }
     return bind;
   }
@@ -345,21 +753,11 @@ define([],function(){
       if(child)
       {
         var children = this.querySelectorAll('*'),
-            len = children.length;
-        if(isStyle)
-        {
-          listeners = (update ? '_childStyleUpdateListeners' : '_childStyleListeners');
-          if(this.kb.attrListeners()[listeners][attr] === undefined) this.kb.attrListeners()[listeners][attr] = [];
-          this.kb.attrListeners()[listeners][attr].push(func);
-        }
-        else
-        {
-          listeners = (update ? '_childAttrUpdateListeners' : '_childAttrListeners');
-          if(this.kb.attrListeners()[listeners][attr] === undefined) this.kb.attrListeners()[listeners][attr] = [];
-          this.kb.attrListeners()[listeners][attr].push(func);
-        }
+            len = children.length,
+            listenerObj;
         for(var x=0;x<len;x++)
         {
+          listenerObj = children[x].attrListeners();
           if(isInput || (attr === _all))
           {
             if(children[x].addInputBinding !== undefined) children[x].addInputBinding();
@@ -369,39 +767,37 @@ define([],function(){
           {
             bind.injectStyleProperty(children[x],attr);
             listeners = (update ? '_parentStyleUpdateListeners' : '_parentStyleListeners');
-            if(children[x].kb.attrListeners()[listeners][attr] === undefined) children[x].kb.attrListeners()[listeners][attr] = [];
-            children[x].kb.attrListeners()[listeners][attr].push(this);
+            if(listenerObj[listeners][attr] === undefined) listenerObj[listeners][attr] = [];
+            listenerObj[listeners][attr].push({parent:this,func:func});
           }
           else
           {
             if(attr === _all)
             {
-              listeners = (update ? '_childStyleUpdateListeners' : '_childStyleListeners');
-              if(this.kb.attrListeners()[listeners][attr] === undefined) this.kb.attrListeners()[listeners][attr] = [];
-              this.kb.attrListeners()[listeners][attr].push(func);
               listeners = (update ? '_parentStyleUpdateListeners' : '_parentStyleListeners');
               var len = _allStyles.length;
               for(var i = 0;i<len;i++)
               {
                 bind.injectStyleProperty(children[x],_allStyles[i]);
-                if(children[x].kb.attrListeners()[listeners][_allStyles[i]] === undefined) children[x].kb.attrListeners()[listeners][_allStyles[i]] = [];
-                children[x].kb.attrListeners()[listeners][_allStyles[i]].push(this);
               }
+              if(listenerObj[listeners][_all] === undefined) listenerObj[listeners][_all] = [];
+                listenerObj[listeners][_all].push({parent:this,func:func});
             }
             listeners = (update ? '_parentAttrUpdateListeners' : '_parentAttrListeners');
-            if(children[x].kb.attrListeners()[listeners][attr] === undefined) children[x].kb.attrListeners()[listeners][attr] = [];
-            children[x].kb.attrListeners()[listeners][attr].push(this);
+            if(listenerObj[listeners][attr] === undefined) listenerObj[listeners][attr] = [];
+            listenerObj[listeners][attr].push({parent:this,func:func});
           }
         }
       }
       else
       {
+        listenerObj = this.attrListeners();
         if(isStyle)
         {
           listeners = (update ? '_styleUpdateListeners' : '_styleListeners');
           bind.injectStyleProperty(this,attr);
-          if(this.kb.attrListeners()[listeners][attr] === undefined) this.kb.attrListeners()[listeners][attr] = [];
-          this.kb.attrListeners()[listeners][attr].push(func);
+          if(listenerObj[listeners][attr] === undefined) listenerObj[listeners][attr] = [];
+          listenerObj[listeners][attr].push(func);
         }
         else
         {
@@ -418,12 +814,12 @@ define([],function(){
             {
               bind.injectStyleProperty(this,_allStyles[x]);
             }
-            if(this.kb.attrListeners()[listeners][attr] === undefined) this.kb.attrListeners()[listeners][attr] = [];
-            this.kb.attrListeners()[listeners][attr].push(func);
+            if(listenerObj[listeners][attr] === undefined) listenerObj[listeners][attr] = [];
+            listenerObj[listeners][attr].push(func);
           }
           listeners = (update ? '_attrUpdateListeners' : '_attrListeners');
-          if(this.kb.attrListeners()[listeners][attr] === undefined) this.kb.attrListeners()[listeners][attr] = [];
-          this.kb.attrListeners()[listeners][attr].push(func);
+          if(listenerObj[listeners][attr] === undefined) listenerObj[listeners][attr] = [];
+          listenerObj[listeners][attr].push(func);
         }
       }
     }
@@ -449,7 +845,7 @@ define([],function(){
           bind.injectStyleProperty(els[x],attr);
         }
         listeners = (update ? _styleUpdateListeners : _styleListeners);
-        if(_styleListeners[attr] === undefined) _styleListeners[attr] = [];
+        if(listeners[attr] === undefined) listeners[attr] = [];
         listeners[attr].push(func);
       }
       else
@@ -468,11 +864,11 @@ define([],function(){
             }
           }
           listeners = (update ? _styleUpdateListeners : _styleListeners);
-          if(_styleListeners[attr] === undefined) _styleListeners[attr] = [];
+          if(listeners[attr] === undefined) listeners[attr] = [];
           listeners[attr].push(func);
         }
         listeners = (update ? _attrUpdateListeners : _attrListeners);
-        if(_attrListeners[attr] === undefined) _attrListeners[attr] = [];
+        if(listeners[attr] === undefined) listeners[attr] = [];
         listeners[attr].push(func);
       }
     }
@@ -509,7 +905,7 @@ define([],function(){
         if(isStyle)
         {
           listeners = (update ? '_childStyleUpdateListeners' : '_childStyleListeners');
-          cut(attr,this.kb.attrListeners()[listeners]);
+          cut(attr,this.attrListeners()[listeners]);
           listeners = (update ? '_parentStyleUpdateListeners' : '_parentStyleListeners');
         }
         else
@@ -517,15 +913,15 @@ define([],function(){
           if(attr === _all)
           {
             listeners = (update ? '_childStyleUpdateListeners' : '_childStyleListeners');
-            cut(attr,this.kb.attrListeners()[listeners]);
+            cut(attr,this.attrListeners()[listeners]);
           }
           listeners = (update ? '_childAttrUpdateListeners' : '_childAttrListeners');
-          cut(attr,this.kb.attrListeners()[listeners]);
+          cut(attr,this.attrListeners()[listeners]);
           listeners = (update ? '_parentAttrUpdateListeners' : '_parentAttrListeners');
         }
         for(x=0;x<len;x++)
         {
-          var parents = children[x].kb.attrListeners()[listeners][attr],
+          var parents = children[x].attrListeners()[listeners][attr],
               parentLen = parents.length;
           for(var i=0;i<parentLen;i++)
           {
@@ -537,7 +933,7 @@ define([],function(){
           if(attr === _all)
           {
             listenersStyle = (update ? '_parentStyleUpdateListeners' : '_parentStyleListeners');
-            var parents = children[x].kb.attrListeners()[listeners][attr],
+            var parents = children[x].attrListeners()[listeners][attr],
                 parentLen = parents.length;
             for(var i=0;i<parentLen;i++)
             {
@@ -554,17 +950,17 @@ define([],function(){
         if(isStyle)
         {
           listeners = (update ? '_styleUpdateListeners' : '_styleListeners');
-          cut(attr,this.kb.attrListeners()[listeners]);
+          cut(attr,this.attrListeners()[listeners]);
         }
         else
         {
           if(attr === _all)
           {
             listeners = (update ? '_styleUpdateListeners' : '_styleListeners');
-            cut(attr,this.kb.attrListeners()[listeners]);
+            cut(attr,this.attrListeners()[listeners]);
           }
           listeners = (update ? '_attrUpdateListeners' : '_attrListeners');
-          cut(attr,this.kb.attrListeners()[listeners]);
+          cut(attr,this.attrListeners()[listeners]);
         }
       }
     }
