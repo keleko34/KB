@@ -10,7 +10,6 @@ This library allows for adding attribute/property change listeners on the front 
 `npm install KB`
 
 ###### Start
-*note: order of operation does not matter, Methods are chainable, constructor can be called whenever, and script tag can be added anywhere*
 
     /* Creates new KB, same as 'new method();' */
     var kb = CreateKB();
