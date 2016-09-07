@@ -721,7 +721,7 @@ define([],function(){
 
             if(_hasInput)
             {
-              if(e.attr === 'appendChild')
+              if(e.attr === 'appendChild' && e.arguments[0].nodeName !== '#text' && e.arguments[0].nodeName !== '#comment')
               {
                 nodes = Array.prototype.slice.call(e.arguments[0].querySelectorAll('input,textarea'));
                 if(e.arguments[0].tagName === 'INPUT' || e.arguments[0].tagName === 'TEXTAREA')
@@ -741,7 +741,7 @@ define([],function(){
               }
             }
 
-            if(e.attr === 'appendChild')
+            if(e.attr === 'appendChild' && e.arguments[0].nodeName !== '#text' && e.arguments[0].nodeName !== '#comment')
             {
               nodes = Array.prototype.slice.call(e.arguments[0].querySelectorAll('*'));
               nodes.unshift(e.arguments[0]);
