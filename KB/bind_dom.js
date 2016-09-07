@@ -1,23 +1,31 @@
 define([],function(){
 
+  /* This holds global attribute listeners when tied to kb */
   var _attrListeners = {},
 
+      /* This holds global attribute update listeners when tied to kb */
       _attrUpdateListeners = {},
 
+      /* This holds global style listeners when tied to kb */
       _styleListeners = {},
 
+      /* This holds global style update listeners when tied to kb */
       _styleUpdateListeners = {},
 
+      /* This holds all injected objects, so You can see what is injected */
       _injected = {},
 
+      /* The symbol to dignify what the master global listener is */
       _all = '*',
 
+      /* A master list of all style prop names */
       _allStyles = Object.getOwnPropertyNames(document.body.style),
 
+      /* global iterators */
       x,
-
       i,
 
+      /* Default set method for all listeners, loops through and runs all attached listeners */
       _set = function(el,prop,val,ret,args)
       {
         var e = new _changeEvent(el,prop,val,ret,args,undefined,'set');
@@ -93,6 +101,7 @@ define([],function(){
         return true;
       },
 
+      /* Default update method for all listeners, loops through and runs all attached update listeners */
       _update = function(el,prop,val,ret,args,action)
       {
         var e = new _changeEvent(el,prop,val,ret,args,action,'update');
@@ -168,6 +177,7 @@ define([],function(){
         return true;
       }
 
+  /* Helper method to loop through listeners and run them */
   function loopListener(looper,e)
   {
     var _looper = looper,
@@ -181,6 +191,7 @@ define([],function(){
     }
   }
 
+  /* Helper method to loop through all parent listeners and run them */
   function loopParentListener(looper,e)
   {
     var _looper = looper,
@@ -196,6 +207,7 @@ define([],function(){
     }
   }
 
+  /* The event object that gets passed to each listener */
   function _changeEvent(el,attr,value,oldValue,args,action,type)
   {
     this.stopPropagation = function(){this._stopPropogation = true;};
@@ -210,6 +222,7 @@ define([],function(){
     this.type = type;
   }
 
+  /* This holds all listeners associated with a particular element */
   function _localBinders()
   {
     this._attrListeners = {};
@@ -223,6 +236,370 @@ define([],function(){
     this._injectedStyle = {};
   }
 
+  /* This is a standard property set overwrite  */
+  function setStandard(descriptor,key,set,update)
+  {
+    var _descriptor = descriptor,
+        _descGet = _descriptor.get,
+        _descSet = _descriptor.set,
+        _key = key,
+        _set = set,
+        _update = update,
+        _oldValue;
+    return function standardSet(v)
+    {
+       _oldValue = _descGet.call(this);
+       if(_set(this,_key,v,_oldValue))
+       {
+         _descSet.call(this,v);
+       }
+       _update(this,_key,v,_oldValue);
+    }
+  }
+
+  /* This is a standard value set overwrite */
+  function setValue(descriptor,key,set,update)
+  {
+    var _descriptor = descriptor,
+        _key = key,
+        _set = set,
+        _update = update,
+        _oldValue;
+    return function valueSet(v)
+    {
+      _oldValue = _descriptor.value;
+      if(_set(this,_key,v,_oldValue,arguments))
+      {
+        _descriptor.value = v;
+      }
+      _update(this,_key,v,_oldValue,arguments);
+    }
+  }
+
+  /* This is a standard function overwrite  */
+  function setFunction(descriptor,key,set,update)
+  {
+    var _descriptor = descriptor,
+        _descVal = _descriptor.value,
+        _key = key,
+        _set = set,
+        _update = update,
+        _action;
+    return function functionSet()
+    {
+      if(_set(this,_key,null,null,arguments))
+      {
+        _action = _descVal.apply(this,arguments);
+      }
+      _update(this,_key,null,null,arguments,_action);
+      return _action;
+    }
+  }
+
+  /* This overwites a style property */
+  function setStyle(descriptor,key,set,update,el)
+  {
+    var _proto = el.style,
+        _descriptor = descriptor,
+        _key = key,
+        _keyCP = key.replace(/([A-Z])/g, "-$1").replace('webkit','-webkit'),
+        _set = set,
+        _update = update,
+        _el = el,
+        _oldValue,
+        _value;
+    return {
+      get:function(){return _value;},
+      set:function styleSet(v)
+      {
+        _oldValue = _value;
+        if(_set(_el,_key,v,_oldValue))
+        {
+          _value = v;
+          _proto.setProperty(_keyCP,v);
+        }
+        _update(_el,_key,v,_oldValue);
+      },
+      enumerable:true,
+      configurable:true
+    }
+  }
+
+  /* A helper method that is run for all addListener methods */
+  function addListener(attr,func,child,update)
+  {
+    if(typeof func !== 'function') return bind;
+
+    var isInput = (['value','checked'].indexOf(attr) !== -1),
+        isStyle = (_allStyles.indexOf(attr) !== -1),
+        listeners;
+
+    if(this.toString() !== bind.toString())
+    {
+      if(child)
+      {
+        var children = this.querySelectorAll('*'),
+            len = children.length,
+            listenerObj;
+        for(var x=0;x<len;x++)
+        {
+          listenerObj = children[x].attrListeners();
+          if(isInput || (attr === _all))
+          {
+            if(children[x].addInputBinding !== undefined) children[x].addInputBinding();
+            if(children[x].addInputBoxBinding !== undefined) children[x].addInputBoxBinding();
+          }
+          if(isStyle)
+          {
+            bind.injectStyleProperty(children[x],attr);
+            listeners = (update ? '_parentStyleUpdateListeners' : '_parentStyleListeners');
+            if(listenerObj[listeners][attr] === undefined) listenerObj[listeners][attr] = [];
+            listenerObj[listeners][attr].push({parent:this,func:func});
+          }
+          else
+          {
+            if(attr === _all)
+            {
+              listeners = (update ? '_parentStyleUpdateListeners' : '_parentStyleListeners');
+              var len = _allStyles.length;
+              for(var i = 0;i<len;i++)
+              {
+                bind.injectStyleProperty(children[x],_allStyles[i]);
+              }
+              if(listenerObj[listeners][_all] === undefined) listenerObj[listeners][_all] = [];
+                listenerObj[listeners][_all].push({parent:this,func:func});
+            }
+            listeners = (update ? '_parentAttrUpdateListeners' : '_parentAttrListeners');
+            if(listenerObj[listeners][attr] === undefined) listenerObj[listeners][attr] = [];
+            listenerObj[listeners][attr].push({parent:this,func:func});
+          }
+        }
+      }
+      else
+      {
+        listenerObj = this.attrListeners();
+        if(isStyle)
+        {
+          listeners = (update ? '_styleUpdateListeners' : '_styleListeners');
+          bind.injectStyleProperty(this,attr);
+          if(listenerObj[listeners][attr] === undefined) listenerObj[listeners][attr] = [];
+          listenerObj[listeners][attr].push(func);
+        }
+        else
+        {
+          if(isInput || (attr === _all))
+          {
+            if(this.addInputBinding !== undefined) this.addInputBinding();
+            if(this.addInputBoxBinding !== undefined) this.addInputBoxBinding();
+          }
+          if(attr === _all)
+          {
+            listeners = (update ? '_styleUpdateListeners' : '_styleListeners');
+            var len = _allStyles.length;
+            for(var x = 0;x<len;x++)
+            {
+              bind.injectStyleProperty(this,_allStyles[x]);
+            }
+            if(listenerObj[listeners][attr] === undefined) listenerObj[listeners][attr] = [];
+            listenerObj[listeners][attr].push(func);
+          }
+          listeners = (update ? '_attrUpdateListeners' : '_attrListeners');
+          if(listenerObj[listeners][attr] === undefined) listenerObj[listeners][attr] = [];
+          listenerObj[listeners][attr].push(func);
+        }
+      }
+    }
+    else
+    {
+      if(isInput || (attr === _all))
+      {
+        var inputs = document.querySelectorAll('input, textarea'),
+            len = inputs.length;
+        for(var x=0;x<len;x++)
+        {
+          if(inputs[x].addInputBinding !== undefined) inputs[x].addInputBinding();
+          if(inputs[x].addInputBoxBinding !== undefined) inputs[x].addInputBoxBinding();
+        }
+      }
+      if(isStyle)
+      {
+        var els = Array.prototype.slice.call(document.body.querySelectorAll('*')),
+            len = (els.length+1);
+        els.unshift(document.body);
+        for(var x=0;x<len;x++)
+        {
+          bind.injectStyleProperty(els[x],attr);
+        }
+        listeners = (update ? _styleUpdateListeners : _styleListeners);
+        if(listeners[attr] === undefined) listeners[attr] = [];
+        listeners[attr].push(func);
+      }
+      else
+      {
+        if(attr === _all)
+        {
+          var els = Array.prototype.slice.call(document.body.querySelectorAll('*')),
+              len = (els.length+1),
+              lenStyles = _allStyles.length;
+          els.unshift(document.body);
+          for(var x=0;x<len;x++)
+          {
+            for(var i=0;i<lenStyles;i++)
+            {
+              bind.injectStyleProperty(els[x],_allStyles[i]);
+            }
+          }
+          listeners = (update ? _styleUpdateListeners : _styleListeners);
+          if(listeners[attr] === undefined) listeners[attr] = [];
+          listeners[attr].push(func);
+        }
+        listeners = (update ? _attrUpdateListeners : _attrListeners);
+        if(listeners[attr] === undefined) listeners[attr] = [];
+        listeners[attr].push(func);
+      }
+    }
+  }
+
+  /* A helper method that is ran for all removeListener methods */
+  function removeListener(attr,func,child,update)
+  {
+    if(typeof func !== 'function') return bind;
+
+    var isInput = (['value','checked'].indexOf(attr) !== -1),
+        isStyle = (_allStyles.indexOf(attr) !== -1),
+        listeners,
+        x;
+
+        function cut(attr,list)
+        {
+          var listenerFuncs = list[attr],
+              len = listenerFuncs.length;
+          for(x=0;x<len;x++)
+          {
+            if(listenerFuncs[x].toString() === func.toString())
+            {
+              listenerFuncs.splice(x,1);
+            }
+          }
+        }
+
+    if(this.toString() !== bind.toString())
+    {
+      if(child)
+      {
+        var children = this.querySelectorAll('*'),
+            len = children.length;
+        if(isStyle)
+        {
+          listeners = (update ? '_childStyleUpdateListeners' : '_childStyleListeners');
+          cut(attr,this.attrListeners()[listeners]);
+          listeners = (update ? '_parentStyleUpdateListeners' : '_parentStyleListeners');
+        }
+        else
+        {
+          if(attr === _all)
+          {
+            listeners = (update ? '_childStyleUpdateListeners' : '_childStyleListeners');
+            cut(attr,this.attrListeners()[listeners]);
+          }
+          listeners = (update ? '_childAttrUpdateListeners' : '_childAttrListeners');
+          cut(attr,this.attrListeners()[listeners]);
+          listeners = (update ? '_parentAttrUpdateListeners' : '_parentAttrListeners');
+        }
+        for(x=0;x<len;x++)
+        {
+          var parents = children[x].attrListeners()[listeners][attr],
+              parentLen = parents.length;
+          for(var i=0;i<parentLen;i++)
+          {
+            if(parents[i].isEqualNode(this))
+            {
+              parents.slice(i,1);
+            }
+          }
+          if(attr === _all)
+          {
+            listenersStyle = (update ? '_parentStyleUpdateListeners' : '_parentStyleListeners');
+            var parents = children[x].attrListeners()[listeners][attr],
+                parentLen = parents.length;
+            for(var i=0;i<parentLen;i++)
+            {
+              if(parents[i].isEqualNode(this))
+              {
+                parents.slice(i,1);
+              }
+            }
+          }
+        }
+      }
+      else
+      {
+        if(isStyle)
+        {
+          listeners = (update ? '_styleUpdateListeners' : '_styleListeners');
+          cut(attr,this.attrListeners()[listeners]);
+        }
+        else
+        {
+          if(attr === _all)
+          {
+            listeners = (update ? '_styleUpdateListeners' : '_styleListeners');
+            cut(attr,this.attrListeners()[listeners]);
+          }
+          listeners = (update ? '_attrUpdateListeners' : '_attrListeners');
+          cut(attr,this.attrListeners()[listeners]);
+        }
+      }
+    }
+    else
+    {
+      if(isStyle)
+      {
+        listeners = (update ? _styleUpdateListeners : _styleListeners);
+        cut(attr,listeners);
+      }
+      else
+      {
+        if(attr === _all)
+        {
+          listeners = (update ? _styleUpdateListeners : _styleListeners);
+          cut(attr,listeners);
+        }
+        listeners = (update ? _attrUpdateListeners : _attrListeners);
+        cut(attr,listeners);
+      }
+    }
+  }
+
+  /* this method gets attached to all elements for easy listener adding of child events */
+  function addChildAttrListener(attr,func)
+  {
+    bind.addAttrListener.call(this,attr,func,true);
+    return this;
+  }
+
+  /* this method gets attached to all elements for easy listener adding of child update events */
+  function addChildAttrUpdateListener(attr,func)
+  {
+    bind.addAttrUpdateListener.call(this,attr,func,true);
+    return this;
+  }
+
+  /* this method gets attached to all elements for easy listener removal of child events */
+  function removeChildAttrListener(attr,func)
+  {
+    bind.removeAttrListener.call(this,attr,func,true);
+    return this;
+  }
+
+  /* this method gets attached to all elements for easy listener removal of child update events */
+  function removeChildAttrUpdateListener(attr,func)
+  {
+    bind.removeAttrUpdateListener.call(this,attr,func,true);
+    return this;
+  }
+
+  /* This is the master constructor, to be ran only once. */
   function bind()
   {
     bind.injectPrototypes(Node,'Node');
@@ -443,91 +820,6 @@ define([],function(){
     return bind;
   }
 
-  function setStandard(descriptor,key,set,update)
-  {
-    var _descriptor = descriptor,
-        _descGet = _descriptor.get,
-        _descSet = _descriptor.set,
-        _key = key,
-        _set = set,
-        _update = update,
-        _oldValue;
-    return function standardSet(v)
-    {
-       _oldValue = _descGet.call(this);
-       if(_set(this,_key,v,_oldValue))
-       {
-         _descSet.call(this,v);
-       }
-       _update(this,_key,v,_oldValue);
-    }
-  }
-
-  function setValue(descriptor,key,set,update)
-  {
-    var _descriptor = descriptor,
-        _key = key,
-        _set = set,
-        _update = update,
-        _oldValue;
-    return function valueSet(v)
-    {
-      _oldValue = _descriptor.value;
-      if(_set(this,_key,v,_oldValue,arguments))
-      {
-        _descriptor.value = v;
-      }
-      _update(this,_key,v,_oldValue,arguments);
-    }
-  }
-
-  function setFunction(descriptor,key,set,update)
-  {
-    var _descriptor = descriptor,
-        _descVal = _descriptor.value,
-        _key = key,
-        _set = set,
-        _update = update,
-        _action;
-    return function functionSet()
-    {
-      if(_set(this,_key,null,null,arguments))
-      {
-        _action = _descVal.apply(this,arguments);
-      }
-      _update(this,_key,null,null,arguments,_action);
-      return _action;
-    }
-  }
-
-  function setStyle(descriptor,key,set,update,el)
-  {
-    var _proto = el.style,
-        _descriptor = descriptor,
-        _key = key,
-        _keyCP = key.replace(/([A-Z])/g, "-$1").replace('webkit','-webkit'),
-        _set = set,
-        _update = update,
-        _el = el,
-        _oldValue,
-        _value;
-    return {
-      get:function(){return _value;},
-      set:function styleSet(v)
-      {
-        _oldValue = _value;
-        if(_set(_el,_key,v,_oldValue))
-        {
-          _value = v;
-          _proto.setProperty(_keyCP,v);
-        }
-        _update(_el,_key,v,_oldValue);
-      },
-      enumerable:true,
-      configurable:true
-    }
-  }
-
   bind.injectPrototypeProperty = function(obj,key,injectName,set,update)
   {
     var _proto = obj.prototype,
@@ -740,250 +1032,6 @@ define([],function(){
     return bind;
   }
 
-  function addListener(attr,func,child,update)
-  {
-    if(typeof func !== 'function') return bind;
-
-    var isInput = (['value','checked'].indexOf(attr) !== -1),
-        isStyle = (_allStyles.indexOf(attr) !== -1),
-        listeners;
-
-    if(this.toString() !== bind.toString())
-    {
-      if(child)
-      {
-        var children = this.querySelectorAll('*'),
-            len = children.length,
-            listenerObj;
-        for(var x=0;x<len;x++)
-        {
-          listenerObj = children[x].attrListeners();
-          if(isInput || (attr === _all))
-          {
-            if(children[x].addInputBinding !== undefined) children[x].addInputBinding();
-            if(children[x].addInputBoxBinding !== undefined) children[x].addInputBoxBinding();
-          }
-          if(isStyle)
-          {
-            bind.injectStyleProperty(children[x],attr);
-            listeners = (update ? '_parentStyleUpdateListeners' : '_parentStyleListeners');
-            if(listenerObj[listeners][attr] === undefined) listenerObj[listeners][attr] = [];
-            listenerObj[listeners][attr].push({parent:this,func:func});
-          }
-          else
-          {
-            if(attr === _all)
-            {
-              listeners = (update ? '_parentStyleUpdateListeners' : '_parentStyleListeners');
-              var len = _allStyles.length;
-              for(var i = 0;i<len;i++)
-              {
-                bind.injectStyleProperty(children[x],_allStyles[i]);
-              }
-              if(listenerObj[listeners][_all] === undefined) listenerObj[listeners][_all] = [];
-                listenerObj[listeners][_all].push({parent:this,func:func});
-            }
-            listeners = (update ? '_parentAttrUpdateListeners' : '_parentAttrListeners');
-            if(listenerObj[listeners][attr] === undefined) listenerObj[listeners][attr] = [];
-            listenerObj[listeners][attr].push({parent:this,func:func});
-          }
-        }
-      }
-      else
-      {
-        listenerObj = this.attrListeners();
-        if(isStyle)
-        {
-          listeners = (update ? '_styleUpdateListeners' : '_styleListeners');
-          bind.injectStyleProperty(this,attr);
-          if(listenerObj[listeners][attr] === undefined) listenerObj[listeners][attr] = [];
-          listenerObj[listeners][attr].push(func);
-        }
-        else
-        {
-          if(isInput || (attr === _all))
-          {
-            if(this.addInputBinding !== undefined) this.addInputBinding();
-            if(this.addInputBoxBinding !== undefined) this.addInputBoxBinding();
-          }
-          if(attr === _all)
-          {
-            listeners = (update ? '_styleUpdateListeners' : '_styleListeners');
-            var len = _allStyles.length;
-            for(var x = 0;x<len;x++)
-            {
-              bind.injectStyleProperty(this,_allStyles[x]);
-            }
-            if(listenerObj[listeners][attr] === undefined) listenerObj[listeners][attr] = [];
-            listenerObj[listeners][attr].push(func);
-          }
-          listeners = (update ? '_attrUpdateListeners' : '_attrListeners');
-          if(listenerObj[listeners][attr] === undefined) listenerObj[listeners][attr] = [];
-          listenerObj[listeners][attr].push(func);
-        }
-      }
-    }
-    else
-    {
-      if(isInput || (attr === _all))
-      {
-        var inputs = document.querySelectorAll('input, textarea'),
-            len = inputs.length;
-        for(var x=0;x<len;x++)
-        {
-          if(inputs[x].addInputBinding !== undefined) inputs[x].addInputBinding();
-          if(inputs[x].addInputBoxBinding !== undefined) inputs[x].addInputBoxBinding();
-        }
-      }
-      if(isStyle)
-      {
-        var els = Array.prototype.slice.call(document.body.querySelectorAll('*')),
-            len = (els.length+1);
-        els.unshift(document.body);
-        for(var x=0;x<len;x++)
-        {
-          bind.injectStyleProperty(els[x],attr);
-        }
-        listeners = (update ? _styleUpdateListeners : _styleListeners);
-        if(listeners[attr] === undefined) listeners[attr] = [];
-        listeners[attr].push(func);
-      }
-      else
-      {
-        if(attr === _all)
-        {
-          var els = Array.prototype.slice.call(document.body.querySelectorAll('*')),
-              len = (els.length+1),
-              lenStyles = _allStyles.length;
-          els.unshift(document.body);
-          for(var x=0;x<len;x++)
-          {
-            for(var i=0;i<lenStyles;i++)
-            {
-              bind.injectStyleProperty(els[x],_allStyles[i]);
-            }
-          }
-          listeners = (update ? _styleUpdateListeners : _styleListeners);
-          if(listeners[attr] === undefined) listeners[attr] = [];
-          listeners[attr].push(func);
-        }
-        listeners = (update ? _attrUpdateListeners : _attrListeners);
-        if(listeners[attr] === undefined) listeners[attr] = [];
-        listeners[attr].push(func);
-      }
-    }
-  }
-
-  function removeListener(attr,func,child,update)
-  {
-    if(typeof func !== 'function') return bind;
-
-    var isInput = (['value','checked'].indexOf(attr) !== -1),
-        isStyle = (_allStyles.indexOf(attr) !== -1),
-        listeners,
-        x;
-
-        function cut(attr,list)
-        {
-          var listenerFuncs = list[attr],
-              len = listenerFuncs.length;
-          for(x=0;x<len;x++)
-          {
-            if(listenerFuncs[x].toString() === func.toString())
-            {
-              listenerFuncs.splice(x,1);
-            }
-          }
-        }
-
-    if(this.toString() !== bind.toString())
-    {
-      if(child)
-      {
-        var children = this.querySelectorAll('*'),
-            len = children.length;
-        if(isStyle)
-        {
-          listeners = (update ? '_childStyleUpdateListeners' : '_childStyleListeners');
-          cut(attr,this.attrListeners()[listeners]);
-          listeners = (update ? '_parentStyleUpdateListeners' : '_parentStyleListeners');
-        }
-        else
-        {
-          if(attr === _all)
-          {
-            listeners = (update ? '_childStyleUpdateListeners' : '_childStyleListeners');
-            cut(attr,this.attrListeners()[listeners]);
-          }
-          listeners = (update ? '_childAttrUpdateListeners' : '_childAttrListeners');
-          cut(attr,this.attrListeners()[listeners]);
-          listeners = (update ? '_parentAttrUpdateListeners' : '_parentAttrListeners');
-        }
-        for(x=0;x<len;x++)
-        {
-          var parents = children[x].attrListeners()[listeners][attr],
-              parentLen = parents.length;
-          for(var i=0;i<parentLen;i++)
-          {
-            if(parents[i].isEqualNode(this))
-            {
-              parents.slice(i,1);
-            }
-          }
-          if(attr === _all)
-          {
-            listenersStyle = (update ? '_parentStyleUpdateListeners' : '_parentStyleListeners');
-            var parents = children[x].attrListeners()[listeners][attr],
-                parentLen = parents.length;
-            for(var i=0;i<parentLen;i++)
-            {
-              if(parents[i].isEqualNode(this))
-              {
-                parents.slice(i,1);
-              }
-            }
-          }
-        }
-      }
-      else
-      {
-        if(isStyle)
-        {
-          listeners = (update ? '_styleUpdateListeners' : '_styleListeners');
-          cut(attr,this.attrListeners()[listeners]);
-        }
-        else
-        {
-          if(attr === _all)
-          {
-            listeners = (update ? '_styleUpdateListeners' : '_styleListeners');
-            cut(attr,this.attrListeners()[listeners]);
-          }
-          listeners = (update ? '_attrUpdateListeners' : '_attrListeners');
-          cut(attr,this.attrListeners()[listeners]);
-        }
-      }
-    }
-    else
-    {
-      if(isStyle)
-      {
-        listeners = (update ? _styleUpdateListeners : _styleListeners);
-        cut(attr,listeners);
-      }
-      else
-      {
-        if(attr === _all)
-        {
-          listeners = (update ? _styleUpdateListeners : _styleListeners);
-          cut(attr,listeners);
-        }
-        listeners = (update ? _attrUpdateListeners : _attrListeners);
-        cut(attr,listeners);
-      }
-    }
-  }
-
   bind.addAttrListener = function(attr,func,child)
   {
     addListener.call(this,attr,func,child,false);
@@ -1006,30 +1054,6 @@ define([],function(){
   {
     removeListener.call(this,attr,func,child,true);
     return bind;
-  }
-
-  function addChildAttrListener(attr,func)
-  {
-    bind.addAttrListener.call(this,attr,func,true);
-    return this;
-  }
-
-  function addChildAttrUpdateListener(attr,func)
-  {
-    bind.addAttrUpdateListener.call(this,attr,func,true);
-    return this;
-  }
-
-  function removeChildAttrListener(attr,func)
-  {
-    bind.removeAttrListener.call(this,attr,func,true);
-    return this;
-  }
-
-  function removeChildAttrUpdateListener(attr,func)
-  {
-    bind.removeAttrUpdateListener.call(this,attr,func,true);
-    return this;
   }
 
   bind.injectedPrototypes = function()
