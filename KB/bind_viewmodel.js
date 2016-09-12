@@ -286,14 +286,27 @@ define([],function(){
       var keys = Object.getOwnPropertyNames(obj[prop]);
       val = model.observableObject();
 
-      val.__kbname = (obj.__kbname !== undefined ? obj.__kbname : "");
-      val.__kbref = (obj.__kbref !== undefined ? obj.__kbref : obj);
-      val.__kbscopeString = ((obj.__kbscopeString || obj.__kbscopeString.length === 0) ? getScopeString(obj.__kbscopeString,prop) : "");
-      val.toJSON = function(){
-        return deepCopy(this,{},function(k,v){
-          if(k !== '__kbref' && k !== '__kbname' && k !== '__kbscopeString') return v;
-        });
-      }
+      Object.defineProperties(val,{
+        __kbname:{
+          value:(obj.__kbname !== undefined ? obj.__kbname : ""),
+          writable:false,
+          enumerable:false,
+          configurable:true
+        },
+        __kbref:{
+          value:(obj.__kbref !== undefined ? obj.__kbref : obj),
+          writable:false,
+          enumerable:false,
+          configurable:true
+        },
+        __kbscopeString:{
+          value:((obj.__kbscopeString || obj.__kbscopeString.length === 0) ? getScopeString(obj.__kbscopeString,prop) : ""),
+          writable:false,
+          enumerable:false,
+          configurable:true
+        }
+      });
+
       for(var x=0,len=keys.length;x<len;x++)
       {
         loopCreateObservable(obj[prop],keys[x],val);
@@ -303,14 +316,28 @@ define([],function(){
     else if(isArray(obj[prop]))
     {
       val = model.observableArray();
-      val.__kbname = (obj.__kbname !== undefined ? obj.__kbname : "");
-      val.__kbref = (obj.__kbref !== undefined ? obj.__kbref : obj);
-      val.__kbscopeString = ((obj.__kbscopeString || obj.__kbscopeString.length === 0)  ? getScopeString(obj.__kbscopeString,prop) : "");
-      val.toJSON = function(){
-        return deepCopy(this,{},function(k,v){
-          if(k !== '__kbref' && k !== '__kbname' && k !== '__kbscopeString') return v;
-        });
-      }
+
+      Object.defineProperties(val,{
+        __kbname:{
+          value:(obj.__kbname !== undefined ? obj.__kbname : ""),
+          writable:false,
+          enumerable:false,
+          configurable:true
+        },
+        __kbref:{
+          value:(obj.__kbref !== undefined ? obj.__kbref : obj),
+          writable:false,
+          enumerable:false,
+          configurable:true
+        },
+        __kbscopeString:{
+          value:((obj.__kbscopeString || obj.__kbscopeString.length === 0) ? getScopeString(obj.__kbscopeString,prop) : ""),
+          writable:false,
+          enumerable:false,
+          configurable:true
+        }
+      });
+
       for(var x=0,len=obj[prop].length;x<len;x++)
       {
         loopCreateObservable(obj[prop],x,val);
@@ -352,118 +379,226 @@ define([],function(){
     }
 
     /* replace all mutator methods to listen for changes */
-    arr.splice = function()
-    {
-      var ret = Array.prototype.splice.apply(this,arguments);
-      updateCheck(this);
-      return ret;
-    }
-
-    arr.push = function()
-    {
-      var ret = Array.prototype.push.apply(this,arguments);
-      updateCheck(this);
-      return ret;
-    }
-
-    arr.pop = function()
-    {
-      var ret = Array.prototype.pop.apply(this,arguments);
-      updateCheck(this);
-      return ret;
-    }
-
-    arr.shift = function()
-    {
-      var ret = Array.prototype.shift.apply(this,arguments);
-      updateCheck(this);
-      return ret;
-    }
-
-    arr.unshift = function()
-    {
-      var ret = Array.prototype.unshift.apply(this,arguments);
-      updateCheck(this);
-      return ret;
-    }
-
-    arr.fill = function()
-    {
-      var ret = Array.prototype.fill.apply(this,arguments);
-      updateCheck(this);
-      return ret;
-    }
-
-    arr.reverse = function()
-    {
-      var ret = Array.prototype.reverse.apply(this,arguments);
-      updateCheck(this);
-      return ret;
-    }
-
-    arr.sort = function()
-    {
-      var ret = Array.prototype.sort.apply(this,arguments);
-      updateCheck(this);
-      return ret;
-    }
-
-    /* add our own methods for adding and removing and keeping the values observable */
-    arr.add = function(val)
-    {
-      Object.defineProperty(arr,(arr.length),setNormal(val,(arr.length),_set,_update,arr.__kbname,arr.__kbref,arr.__kbscopeString));
-      if(!_added(arr,(arr.length),val,undefined,arr.__kbname,arr.__kbref,arr.__kbscopeString))
-      {
-        arr.remove((arr.length-1));
+    Object.defineProperties(arr,{
+      splice:{
+        value:function(){
+          var ret = Array.prototype.splice.apply(this,arguments);
+          updateCheck(this);
+          return ret;
+        },
+        writable:false,
+        enumerable:false,
+        configurable:true
+      },
+      push:{
+        value:function(){
+          var ret = Array.prototype.push.apply(this,arguments);
+          updateCheck(this);
+          return ret;
+        },
+        writable:false,
+        enumerable:false,
+        configurable:true
+      },
+      pop:{
+        value:function(){
+          var ret = Array.prototype.pop.apply(this,arguments);
+          updateCheck(this);
+          return ret;
+        },
+        writable:false,
+        enumerable:false,
+        configurable:true
+      },
+      shift:{
+        value:function(){
+          var ret = Array.prototype.shift.apply(this,arguments);
+          updateCheck(this);
+          return ret;
+        },
+        writable:false,
+        enumerable:false,
+        configurable:true
+      },
+      unshift:{
+        value:function(){
+          var ret = Array.prototype.unshift.apply(this,arguments);
+          updateCheck(this);
+          return ret;
+        },
+        writable:false,
+        enumerable:false,
+        configurable:true
+      },
+      fill:{
+        value:function(){
+          var ret = Array.prototype.fill.apply(this,arguments);
+          updateCheck(this);
+          return ret;
+        },
+        writable:false,
+        enumerable:false,
+        configurable:true
+      },
+      reverse:{
+        value:function(){
+          var ret = Array.prototype.reverse.apply(this,arguments);
+          updateCheck(this);
+          return ret;
+        },
+        writable:false,
+        enumerable:false,
+        configurable:true
+      },
+      sort:{
+        value:function(){
+          var ret = Array.prototype.sort.apply(this,arguments);
+          updateCheck(this);
+          return ret;
+        },
+        writable:false,
+        enumerable:false,
+        configurable:true
+      },
+      add:{
+        value:function(val){
+          Object.defineProperty(arr,(arr.length),setNormal(val,(arr.length),_set,_update,arr.__kbname,arr.__kbref,arr.__kbscopeString));
+          if(!_added(arr,(arr.length),val,undefined,arr.__kbname,arr.__kbref,arr.__kbscopeString))
+          {
+            arr.remove((arr.length-1));
+          }
+          return arr;
+        },
+        writable:false,
+        enumerable:false,
+        configurable:true
+      },
+      remove:{
+        value:function(val){
+          if(arr.indexOf(val) !== undefined)
+          {
+            arr.splice(arr.indexOf(val),1);
+          }
+          else if(typeof val === 'number')
+          {
+            arr.splice(val,1);
+          }
+          return arr;
+        },
+        writable:false,
+        enumerable:false,
+        configurable:true
+      },
+      stringify:{
+        value:function(){
+          return JSON.stringify(arr);
+        },
+        writable:false,
+        enumerable:false,
+        configurable:true
+      },
+      toJSON:{
+        value:function(val){
+          return deepCopy(this,[],function(k,v)
+          {
+            if(k.indexOf('__kb') === -1) return v;
+          });
+        },
+        writable:false,
+        enumerable:false,
+        configurable:true
+      },
+      __kblisteners:{
+        value:{},
+        writable:false,
+        enumerable:false,
+        configurable:true
+      },
+      __kbupdatelisteners:{
+        value:{},
+        writable:false,
+        enumerable:false,
+        configurable:true
+      },
+      __kbparentlisteners:{
+        value:{},
+        writable:false,
+        enumerable:false,
+        configurable:true
+      },
+      __kbparentupdatelisteners:{
+        value:{},
+        writable:false,
+        enumerable:false,
+        configurable:true
+      },
+      __kbdatacreatelisteners:{
+        value:[],
+        writable:false,
+        enumerable:false,
+        configurable:true
+      },
+      addDataListener:{
+        value:model.addDataListener,
+        writable:false,
+        enumerable:false,
+        configurable:true
+      },
+      addDataUpdateListener:{
+        value:model.addDataUpdateListener,
+        writable:false,
+        enumerable:false,
+        configurable:true
+      },
+      addChildDataListener:{
+        value:addChildDataListener,
+        writable:false,
+        enumerable:false,
+        configurable:true
+      },
+      addChildDataUpdateListener:{
+        value:addChildDataUpdateListener,
+        writable:false,
+        enumerable:false,
+        configurable:true
+      },
+      removeDataListener:{
+        value:model.removeDataListener,
+        writable:false,
+        enumerable:false,
+        configurable:true
+      },
+      removeDataUpdateListener:{
+        value:model.removeDataUpdateListener,
+        writable:false,
+        enumerable:false,
+        configurable:true
+      },
+      removeChildDataListener:{
+        value:removeChildDataListener,
+        writable:false,
+        enumerable:false,
+        configurable:true
+      },
+      removeChildDataUpdateListener:{
+        value:removeChildDataUpdateListener,
+        writable:false,
+        enumerable:false,
+        configurable:true
+      },
+      addDataCreateListener:{
+        value:model.addDataCreateListener,
+        writable:false,
+        enumerable:false,
+        configurable:true
+      },
+      removeDataCreateListener:{
+        value:model.removeDataCreateListener,
+        writable:false,
+        enumerable:false,
+        configurable:true
       }
-      return arr;
-    }
-
-    arr.remove = function(val)
-    {
-      if(arr.indexOf(val) !== undefined)
-      {
-        arr.splice(arr.indexOf(val),1);
-      }
-      else if(typeof val === 'number')
-      {
-        arr.splice(val,1);
-      }
-      return arr;
-    }
-
-    arr.stringify = function()
-    {
-      return JSON.stringify(arr);
-    }
-
-    arr.toJSON = function(val)
-    {
-      return deepCopy(this,[],function(k,v)
-      {
-        if(k,indexOf('__kb') === -1) return v;
-      });
-    }
-
-    arr.__kblisteners = {};
-    arr.__kbupdatelisteners = {};
-    arr.__kbparentlisteners = {};
-    arr.__kbparentupdatelisteners = {};
-    arr.__kbdatacreatelisteners = [];
-
-    arr.addDataListener = model.addDataListener;
-    arr.addDataUpdateListener = model.addDataUpdateListener;
-    arr.addChildDataListener = addChildDataListener;
-    arr.addChildDataUpdateListener = addChildDataUpdateListener;
-
-    arr.removeDataListener = model.removeDataListener;
-    arr.removeDataUpdateListener = model.removeDataUpdateListener;
-    arr.removeChildDataListener = removeChildDataListener;
-    arr.removeChildDataUpdateListener = removeChildDataUpdateListener;
-
-    arr.addDataCreateListener = model.addDataCreateListener;
-
-    arr.removeDataCreateListener = model.removeDataCreateListener;
+    });
 
     return arr;
   }
@@ -472,54 +607,139 @@ define([],function(){
   {
     var obj = {};
 
-    obj.add = function(prop,val)
-    {
-      Object.defineProperty(obj,prop,setNormal(val,prop,_set,_update,obj.__kbname,obj.__kbref,obj.__kbscopeString));
-      if(!_added(obj,prop,val,undefined,obj.__kbname,obj.__kbref,obj.__kbscopeString))
-      {
-        obj.remove(prop);
+    Object.defineProperties(obj,{
+      add:{
+        value:function(prop,val){
+          Object.defineProperty(obj,prop,setNormal(val,prop,_set,_update,obj.__kbname,obj.__kbref,obj.__kbscopeString));
+          if(!_added(obj,prop,val,undefined,obj.__kbname,obj.__kbref,obj.__kbscopeString))
+          {
+            obj.remove(prop);
+          }
+          return obj;
+        },
+        writable:false,
+        enumerable:false,
+        configurable:true
+      },
+      remove:{
+        value:function(prop){
+          obj[prop] = undefined;
+          return obj;
+        },
+        writable:false,
+        enumerable:false,
+        configurable:true
+      },
+      stringify:{
+        value:function(){
+          return JSON.stringify(obj);
+        },
+        writable:false,
+        enumerable:false,
+        configurable:true
+      },
+      toJSON:{
+        value:function(val){
+          return deepCopy(this,{},function(k,v)
+          {
+            if(k,indexOf('__kb') === -1) return v;
+          });
+        },
+        writable:false,
+        enumerable:false,
+        configurable:true
+      },
+      __kblisteners:{
+        value:{},
+        writable:false,
+        enumerable:false,
+        configurable:true
+      },
+      __kbupdatelisteners:{
+        value:{},
+        writable:false,
+        enumerable:false,
+        configurable:true
+      },
+      __kbparentlisteners:{
+        value:{},
+        writable:false,
+        enumerable:false,
+        configurable:true
+      },
+      __kbparentupdatelisteners:{
+        value:{},
+        writable:false,
+        enumerable:false,
+        configurable:true
+      },
+      __kbdatacreatelisteners:{
+        value:[],
+        writable:false,
+        enumerable:false,
+        configurable:true
+      },
+      addDataListener:{
+        value:model.addDataListener,
+        writable:false,
+        enumerable:false,
+        configurable:true
+      },
+      addDataUpdateListener:{
+        value:model.addDataUpdateListener,
+        writable:false,
+        enumerable:false,
+        configurable:true
+      },
+      addChildDataListener:{
+        value:addChildDataListener,
+        writable:false,
+        enumerable:false,
+        configurable:true
+      },
+      addChildDataUpdateListener:{
+        value:addChildDataUpdateListener,
+        writable:false,
+        enumerable:false,
+        configurable:true
+      },
+      removeDataListener:{
+        value:model.removeDataListener,
+        writable:false,
+        enumerable:false,
+        configurable:true
+      },
+      removeDataUpdateListener:{
+        value:model.removeDataUpdateListener,
+        writable:false,
+        enumerable:false,
+        configurable:true
+      },
+      removeChildDataListener:{
+        value:removeChildDataListener,
+        writable:false,
+        enumerable:false,
+        configurable:true
+      },
+      removeChildDataUpdateListener:{
+        value:removeChildDataUpdateListener,
+        writable:false,
+        enumerable:false,
+        configurable:true
+      },
+      addDataCreateListener:{
+        value:model.addDataCreateListener,
+        writable:false,
+        enumerable:false,
+        configurable:true
+      },
+      removeDataCreateListener:{
+        value:model.removeDataCreateListener,
+        writable:false,
+        enumerable:false,
+        configurable:true
       }
-      return obj;
-    }
-
-    obj.remove = function(prop)
-    {
-      obj[prop] = undefined;
-      return obj;
-    }
-
-    obj.stringify = function()
-    {
-      return JSON.stringify(obj);
-    }
-
-    obj.toJSON = function(val)
-    {
-      return deepCopy(this,{},function(k,v)
-      {
-        if(k,indexOf('__kb') === -1) return v;
-      });
-    }
-
-    obj.__kblisteners = {};
-    obj.__kbupdatelisteners = {};
-    obj.__kbparentlisteners = {};
-    obj.__kbparentupdatelisteners = {};
-    obj.__kbdatacreatelisteners = [];
-
-    obj.addDataListener = model.addDataListener;
-    obj.addDataUpdateListener = model.addDataUpdateListener;
-    obj.addChildDataListener = addChildDataListener;
-    obj.addChildDataUpdateListener = addChildDataUpdateListener;
-
-    obj.removeDataListener = model.removeDataListener;
-    obj.removeDataUpdateListener = model.removeDataUpdateListener;
-    obj.removeChildDataListener = removeChildDataListener;
-    obj.removeChildDataUpdateListener = removeChildDataUpdateListener;
-
-    obj.addDataCreateListener = model.addDataCreateListener;
-
-    obj.removeDataCreateListener = model.removeDataCreateListener;
+    });
 
     return obj;
   }
@@ -537,9 +757,27 @@ define([],function(){
           newObj[keys[x]] = obj[keys[x]];
         }
         obj = newObj;
-        obj.__kbname = name;
-        obj.__kbref = obj;
-        obj.__kbscopeString = "";
+
+        Object.defineProperties(obj,{
+          __kbname:{
+            value:name,
+            writable:false,
+            enumerable:false,
+            configurable:true
+          },
+          __kbref:{
+            value:obj,
+            writable:false,
+            enumerable:false,
+            configurable:true
+          },
+          __kbscopeString:{
+            value:"",
+            writable:false,
+            enumerable:false,
+            configurable:true
+          }
+        });
       }
       else if(isArray(obj))
       {
@@ -549,9 +787,26 @@ define([],function(){
           newObj[x] = obj[x];
         }
         obj = newObj;
-        obj.__kbname = name;
-        obj.__kbref = obj;
-        obj.__kbscopeString = "";
+        Object.defineProperties(obj,{
+          __kbname:{
+            value:name,
+            writable:false,
+            enumerable:false,
+            configurable:true
+          },
+          __kbref:{
+            value:obj,
+            writable:false,
+            enumerable:false,
+            configurable:true
+          },
+          __kbscopeString:{
+            value:"",
+            writable:false,
+            enumerable:false,
+            configurable:true
+          }
+        });
       }
     }
     return loopCreateObservable(obj,prop,obj);
@@ -600,15 +855,39 @@ define([],function(){
           var vmKeys = Object.keys(_vm),
           obsv = model.observableObject();
       obsv.__proto__ = _vm.__proto__;
-      obsv.__kbname = name;
-      obsv.__kbref = obsv;
-      obsv.__kbscopeString = "";
+
+      Object.defineProperties(obsv,{
+          __kbname:{
+            value:name,
+            writable:false,
+            enumerable:false,
+            configurable:true
+          },
+          __kbref:{
+            value:obsv,
+            writable:false,
+            enumerable:false,
+            configurable:true
+          },
+          __kbscopeString:{
+            value:"",
+            writable:false,
+            enumerable:false,
+            configurable:true
+          }
+        });
+
       for(var x=0,len=vmKeys.length;x<len;x++)
       {
         obsv[vmKeys[x]] = _vm[vmKeys[x]];
         model.createObservable(name,obsv,vmKeys[x]);
       }
-      obsv.constructor = _viewmodels[name];
+      Object.defineProperty(obsv,'constructor',{
+        value:_viewmodels[name],
+        writable:false,
+        enumerable:false,
+        configurable:true
+      })
       return obsv;
     }
     else
@@ -631,10 +910,7 @@ define([],function(){
   function parentloop(obj,prop,func,update,remove,initial)
   {
     var _listeners = (update ? obj.__kbparentupdatelisteners : obj.__kbparentlisteners),
-        _keys = Object.keys(obj).filter(function(k){
-          var _arr = ['constructor','stringify','toJSON','splice','push','pop','shift','unshift','fill','reverse'];
-          return (k.indexOf('__kb') === -1 && k.indexOf('add') === -1 && k.indexOf('remove') === -1 && _arr.indexOf(k) === -1);
-        });
+        _keys = Object.keys(obj);
     if(!initial)
     {
       if(!remove)
