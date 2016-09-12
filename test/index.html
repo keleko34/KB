@@ -107,6 +107,60 @@
           subChild1.appendChild(document.createElement('input'));
           subChild1.children[(subChild1.children.length-1)].style.background = '#F00';
         }
+
+        function cool()
+        {
+          this.yay = "cool";
+          this.cool = 500;
+        }
+
+        cool.prototype.gimme = function()
+        {
+          return ""+this.yay+" "+this.cool;
+        }
+
+        var yay = {
+          arr:[20,50,30],
+          cool:500,
+          something:"something",
+          why:false
+        };
+
+        kb.setViewModel('cool',cool);
+        kb.setViewModel('yay',yay);
+
+        var t = kb.createViewModel('cool'),
+            q = kb.createViewModel('yay');
+
+        kb.addDataCreateListener(function(e){
+          console.log("created prop ",e.key," on ",e.localScope," with value ",e.value);
+        })
+        .addDataListener('*',function(e){
+          console.log(e);
+        });
+
+        q.addDataListener('arr[0]',function(e){
+          console.log("we had a change on arr index 0",e.value, " old ",e.oldValue);
+        })
+
+        q.arr.add(40);
+        q.add('coolest',1000);
+
+        q.arr[0] = 100;
+
+        kb.addAttrUpdateListener('value',function(e){
+          t.yay = e.value;
+          console.log(t.gimme());
+        });
+        t.addDataUpdateListener('yay',function(e){
+          testInput.value = e.value;
+        })
+        q.addChildDataListener(0,function(e){
+
+          console.log("child changed",e.value);
+        })
+
+        q.arr[0] = 500;
       })
     </script>
   </body>

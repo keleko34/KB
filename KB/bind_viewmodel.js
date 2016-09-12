@@ -4,23 +4,147 @@ define([],function(){
       _viewmodels = {},
       _dataListeners = {},
       _dataUpdateListeners = {},
+      _dataAddedListeners = [],
+      _all = "*",
       _set = function(local,key,value,oldValue,name,obj,scopeString)
       {
-        var e = _changeEvent(_viewmodels[name],name,obj,value,oldValue,scopeString,key);
+        var e = new _changeEvent(_viewmodels[name],name,obj,local,value,oldValue,scopeString,key);
+        if(_dataListeners[_all] !== undefined)
+        {
+          loop:for(var x=0,len=_dataListeners[_all].length;x<len;x++)
+          {
+            _dataListeners[_all][x](e);
+            if(e._stopPropogation) break loop;
+          }
+        }
+
+        if(e._stopPropogation === undefined && _dataListeners[key] !== undefined)
+        {
+          loop:for(var x=0,len=_dataListeners[key].length;x<len;x++)
+          {
+            _dataListeners[key][x](e);
+            if(e._stopPropogation) break loop;
+          }
+        }
+
+        if(e._stopPropogation === undefined && _dataListeners[scopeString] !== undefined)
+        {
+          loop:for(var x=0,len=_dataListeners[scopeString].length;x<len;x++)
+          {
+            _dataListeners[scopeString][x](e);
+            if(e._stopPropogation) break loop;
+          }
+        }
+
+        if(e._stopPropogation === undefined && obj.__kblisteners[scopeString] !== undefined && (scopeString.indexOf('.') !== -1 || scopeString.indexOf('[') !== -1))
+        {
+          loop:for(var x=0,len=obj.__kblisteners[scopeString].length;x<len;x++)
+          {
+            obj.__kblisteners[scopeString][x](e);
+            if(e._stopPropogation) break loop;
+          }
+        }
+
+        if(e._stopPropogation === undefined && local.__kblisteners[key] !== undefined)
+        {
+          loop:for(var x=0,len=local.__kblisteners[key].length;x<len;x++)
+          {
+            local.__kblisteners[key][x](e);
+            if(e._stopPropogation) break loop;
+          }
+        }
+
+        if(e._stopPropogation === undefined && local.__kbparentlisteners[key] !== undefined)
+        {
+          loop:for(var x=0,len=local.__kbparentlisteners[key].length;x<len;x++)
+          {
+            local.__kbparentlisteners[key][x](e);
+            if(e._stopPropogation) break loop;
+          }
+        }
 
         if(e._preventDefault) return false;
         return true;
       },
       _update = function(local,key,value,oldValue,name,obj,scopeString)
       {
-        var e = _changeEvent(_viewmodels[name],name,obj,value,oldValue,scopeString,key);
+        var e = new _changeEvent(_viewmodels[name],name,obj,local,value,oldValue,scopeString,key);
+
+        if(_dataUpdateListeners[_all] !== undefined)
+        {
+          loop:for(var x=0,len=_dataUpdateListeners[_all].length;x<len;x++)
+          {
+            _dataUpdateListeners[_all][x](e);
+            if(e._stopPropogation) break loop;
+          }
+        }
+
+        if(e._stopPropogation === undefined && _dataUpdateListeners[key] !== undefined)
+        {
+          loop:for(var x=0,len=_dataUpdateListeners[key].length;x<len;x++)
+          {
+            _dataUpdateListeners[key][x](e);
+            if(e._stopPropogation) break loop;
+          }
+        }
+
+        if(e._stopPropogation === undefined && _dataUpdateListeners[scopeString] !== undefined)
+        {
+          loop:for(var x=0,len=_dataUpdateListeners[scopeString].length;x<len;x++)
+          {
+            _dataUpdateListeners[scopeString][x](e);
+            if(e._stopPropogation) break loop;
+          }
+        }
+
+        if(e._stopPropogation === undefined && obj.__kbupdatelisteners[scopeString] !== undefined && (scopeString.indexOf('.') !== -1 || scopeString.indexOf('[') !== -1))
+        {
+          loop:for(var x=0,len=obj.__kbupdatelisteners[scopeString].length;x<len;x++)
+          {
+            obj.__kbupdatelisteners[scopeString][x](e);
+            if(e._stopPropogation) break loop;
+          }
+        }
+
+        if(e._stopPropogation === undefined && local.__kbupdatelisteners[key] !== undefined)
+        {
+          loop:for(var x=0,len=local.__kbupdatelisteners[key].length;x<len;x++)
+          {
+            local.__kbupdatelisteners[key][x](e);
+            if(e._stopPropogation) break loop;
+          }
+        }
+
+        if(e._stopPropogation === undefined && local.__kbparentupdatelisteners[key] !== undefined)
+        {
+          loop:for(var x=0,len=local.__kbparentupdatelisteners[key].length;x<len;x++)
+          {
+            local.__kbparentupdatelisteners[key][x](e);
+            if(e._stopPropogation) break loop;
+          }
+        }
 
         if(e._preventDefault) return false;
         return true;
       },
       _added = function(local,key,value,oldValue,name,obj,scopeString)
       {
-        var e = _changeEvent(_viewmodels[name],name,obj,value,oldValue,scopeString,key);
+        var e = new _changeEvent(_viewmodels[name],name,obj,local,value,oldValue,scopeString,key);
+
+        loop:for(var x=0,len=_dataAddedListeners.length;x<len;x++)
+        {
+          _dataAddedListeners[x](e);
+          if(e._stopPropogation) break loop;
+        }
+
+        if(e._stopPropogation === undefined)
+        {
+          loop:for(var x=0,len=local.__kbdatacreatelisteners.length;x<len;x++)
+          {
+            local.__kbdatacreatelisteners[x](e);
+            if(e._stopPropogation) break loop;
+          }
+        }
 
         if(e._preventDefault) return false;
         return true;
@@ -39,7 +163,7 @@ define([],function(){
   function getScopeString(obj,prop)
   {
     var scope =((isObject(obj) || isArray(obj)) ? obj.__kbscopeString : (typeof obj === 'string' ? obj : ''));
-    if(isArray(obj))
+    if(isArray(obj) || (typeof prop === 'number'))
     {
       return scope+"["+prop+"]";
     }
@@ -95,19 +219,18 @@ define([],function(){
     return obj2;
   }
 
-  function _changeEvent(viewmodel,name,obj,local,value,oldValue,scopeString,key,args,action)
+  function _changeEvent(viewmodel,name,obj,local,value,oldValue,scopeString,key)
   {
     this.stopPropagation = function(){this._stopPropogation = true;};
     this.preventDefault = function(){this._preventDefault = true;};
-    this.viewModel = viewmodel;
-    this.viewModelKey = vm;
+    this.instance = viewmodel;
+    this.viewmodel = name;
     this.scope = obj;
+    this.localScope = local;
     this.value = value;
     this.oldValue = oldValue;
     this.scopeString = scopeString;
     this.key = key;
-    this.args = args;
-    this.action = action;
   }
 
   function setNormal(val,key,set,update,name,obj,scopeString)
@@ -125,7 +248,21 @@ define([],function(){
       set:function(v)
       {
         _oldValue = _val;
-       if(_set(this,_key,v,_oldValue,_name,_obj,_scopeString))
+        if(isObject(_oldValue) || isArray(_oldValue))
+        {
+          if(JSON.stringify(v) === JSON.stringify(_oldValue))
+          {
+            return;
+          }
+        }
+        else
+        {
+          if(v.toString() === _oldValue.toString())
+          {
+            return;
+          }
+        }
+       if(_set(this,_key,v,_oldValue,_name,_obj,getScopeString(this,_key)))
        {
          _val = v;
          if(isObject(v) || isArray(v))
@@ -133,7 +270,7 @@ define([],function(){
            model.createObservable(_name,this,_key);
          }
        }
-       _update(this,_key,v,_oldValue,_name,_obj,_scopeString);
+       _update(this,_key,v,_oldValue,_name,_obj,getScopeString(this,_key));
 
       },
       enumerable:true,
@@ -149,10 +286,6 @@ define([],function(){
       var keys = Object.getOwnPropertyNames(obj[prop]);
       val = model.observableObject();
 
-      for(var x=0,len=keys.length;x<len;x++)
-      {
-        loopCreateObservable(obj[prop],keys[x],val);
-      }
       val.__kbname = (obj.__kbname !== undefined ? obj.__kbname : "");
       val.__kbref = (obj.__kbref !== undefined ? obj.__kbref : obj);
       val.__kbscopeString = ((obj.__kbscopeString || obj.__kbscopeString.length === 0) ? getScopeString(obj.__kbscopeString,prop) : "");
@@ -161,15 +294,15 @@ define([],function(){
           if(k !== '__kbref' && k !== '__kbname' && k !== '__kbscopeString') return v;
         });
       }
-      Object.defineProperty((set || obj),prop,setNormal(val,prop,_set,_update,obj.__kbname,obj.__kbref,obj.__kbscopeString));
+      for(var x=0,len=keys.length;x<len;x++)
+      {
+        loopCreateObservable(obj[prop],keys[x],val);
+      }
+      Object.defineProperty((set || obj),prop,setNormal(val,prop,_set,_update,(set.__kbname || obj.__kbname),(set.__kbref || obj.__kbref),(set.__kbscopeString || obj.__kbscopeString)));
     }
     else if(isArray(obj[prop]))
     {
       val = model.observableArray();
-      for(var x=0,len=obj[prop].length;x<len;x++)
-      {
-        loopCreateObservable(obj[prop],x,val);
-      }
       val.__kbname = (obj.__kbname !== undefined ? obj.__kbname : "");
       val.__kbref = (obj.__kbref !== undefined ? obj.__kbref : obj);
       val.__kbscopeString = ((obj.__kbscopeString || obj.__kbscopeString.length === 0)  ? getScopeString(obj.__kbscopeString,prop) : "");
@@ -178,20 +311,23 @@ define([],function(){
           if(k !== '__kbref' && k !== '__kbname' && k !== '__kbscopeString') return v;
         });
       }
-      Object.defineProperty((set || obj),prop,setNormal(val,prop,_set,_update,obj.__kbname,obj.__kbref,obj.__kbscopeString));
+      for(var x=0,len=obj[prop].length;x<len;x++)
+      {
+        loopCreateObservable(obj[prop],x,val);
+      }
+      Object.defineProperty((set || obj),prop,setNormal(val,prop,_set,_update,(set.__kbname || obj.__kbname),(set.__kbref || obj.__kbref),(set.__kbscopeString || obj.__kbscopeString)));
     }
     else
     {
       val = obj[prop];
-      Object.defineProperty((set || obj),prop,setNormal(val,prop,_set,_update,obj.__kbname,obj.__kbref,obj.__kbscopeString));
+      Object.defineProperty((set || obj),prop,setNormal(val,prop,_set,_update,(set.__kbname || obj.__kbname),(set.__kbref || obj.__kbref),(set.__kbscopeString || obj.__kbscopeString)));
     }
     return (set || obj);
   }
 
   function model()
   {
-
-
+    /* our constructor needs something */
 
     return model;
   }
@@ -296,18 +432,38 @@ define([],function(){
       return arr;
     }
 
+    arr.stringify = function()
+    {
+      return JSON.stringify(arr);
+    }
+
     arr.toJSON = function(val)
     {
       return deepCopy(this,[],function(k,v)
       {
-        if(k !== '__kbref' && k !== '__kbname' && k !== '__kbscopeString') return v;
+        if(k,indexOf('__kb') === -1) return v;
       });
     }
 
-    arr.addPropertyListener = model.addPropertyListener;
-    arr.addPropertyUpdateListener = model.addPropertyUpdateListener;
-    arr.addChildPropertyListener = addChildPropertyListener;
-    arr.addChildPropertyUpdateListener = addChildPropertyUpdateListener;
+    arr.__kblisteners = {};
+    arr.__kbupdatelisteners = {};
+    arr.__kbparentlisteners = {};
+    arr.__kbparentupdatelisteners = {};
+    arr.__kbdatacreatelisteners = [];
+
+    arr.addDataListener = model.addDataListener;
+    arr.addDataUpdateListener = model.addDataUpdateListener;
+    arr.addChildDataListener = addChildDataListener;
+    arr.addChildDataUpdateListener = addChildDataUpdateListener;
+
+    arr.removeDataListener = model.removeDataListener;
+    arr.removeDataUpdateListener = model.removeDataUpdateListener;
+    arr.removeChildDataListener = removeChildDataListener;
+    arr.removeChildDataUpdateListener = removeChildDataUpdateListener;
+
+    arr.addDataCreateListener = model.addDataCreateListener;
+
+    arr.removeDataCreateListener = model.removeDataCreateListener;
 
     return arr;
   }
@@ -341,14 +497,29 @@ define([],function(){
     {
       return deepCopy(this,{},function(k,v)
       {
-        if(k !== '__kbref' && k !== '__kbname' && k !== '__kbscopeString') return v;
+        if(k,indexOf('__kb') === -1) return v;
       });
     }
 
-    obj.addPropertyListener = model.addPropertyListener;
-    obj.addPropertyUpdateListener = model.addPropertyUpdateListener;
-    obj.addChildPropertyListener = addChildPropertyListener;
-    obj.addChildPropertyUpdateListener = addChildPropertyUpdateListener;
+    obj.__kblisteners = {};
+    obj.__kbupdatelisteners = {};
+    obj.__kbparentlisteners = {};
+    obj.__kbparentupdatelisteners = {};
+    obj.__kbdatacreatelisteners = [];
+
+    obj.addDataListener = model.addDataListener;
+    obj.addDataUpdateListener = model.addDataUpdateListener;
+    obj.addChildDataListener = addChildDataListener;
+    obj.addChildDataUpdateListener = addChildDataUpdateListener;
+
+    obj.removeDataListener = model.removeDataListener;
+    obj.removeDataUpdateListener = model.removeDataUpdateListener;
+    obj.removeChildDataListener = removeChildDataListener;
+    obj.removeChildDataUpdateListener = removeChildDataUpdateListener;
+
+    obj.addDataCreateListener = model.addDataCreateListener;
+
+    obj.removeDataCreateListener = model.removeDataCreateListener;
 
     return obj;
   }
@@ -417,6 +588,7 @@ define([],function(){
     {
       console.error("A Viewmodel by the name ",name," already exists");
     }
+    return model;
   }
 
   model.createViewModel = function(name,params)
@@ -443,6 +615,7 @@ define([],function(){
     {
       console.error("There is no viewmodel by the name ",name);
     }
+    return null;
   }
 
   model.isRegistered = function(name)
@@ -455,50 +628,195 @@ define([],function(){
     return _model;
   }
 
-  function addListener(prop,func,update,child)
+  function parentloop(obj,prop,func,update,remove,initial)
   {
-    if(!update)
+    var _listeners = (update ? obj.__kbparentupdatelisteners : obj.__kbparentlisteners),
+        _keys = Object.keys(obj).filter(function(k){
+          var _arr = ['constructor','stringify','toJSON','splice','push','pop','shift','unshift','fill','reverse'];
+          return (k.indexOf('__kb') === -1 && k.indexOf('add') === -1 && k.indexOf('remove') === -1 && _arr.indexOf(k) === -1);
+        });
+    if(!initial)
     {
-      if(child)
+      if(!remove)
       {
-
+        if(_listeners[prop] === undefined) _listeners[prop] = [];
+        _listeners[prop].push(func);
       }
       else
       {
+        loop:for(var x=0,len=_listeners[prop].length;x<len;x++)
+        {
+          if(_listeners[prop][x].toString() === func.toString())
+          {
+            _listeners[prop].splice(x,1);
+            break loop;
+          }
+        }
+      }
+    }
+    for(var x=0,len=_keys.length;x<len;x++)
+    {
+      var val = obj[_keys[x]];
+      if(isObject(val) || isArray(val))
+      {
+        parentloop(val,prop,func,update,remove);
+      }
+    }
+  }
 
+  function addListener(prop,func,update,child)
+  {
+    if(!(this.toString() === model.toString()))
+    {
+      if(!child)
+      {
+        _listeners = (update ? this.__kbupdatelisteners : this.__kblisteners);
+        if(_listeners[prop] === undefined) _listeners[prop] = [];
+        _listeners[prop].push(func);
+      }
+      else
+      {
+        parentloop(this,prop,func,update,false,true);
       }
     }
     else
     {
-      if(child)
-      {
+      _listeners = (update ? _dataUpdateListeners : _dataListeners);
+      if(_listeners[prop] === undefined) _listeners[prop] = [];
+      _listeners[prop].push(func);
+    }
+  }
 
+  function addChildDataListener(prop,func)
+  {
+    model.addDataListener.call(this,prop,func,true);
+  }
+
+  function addChildDataUpdateListener(prop,func)
+  {
+    model.addDataUpdateListener.call(this,prop,func,true);
+  }
+
+  model.addDataListener = function(scopeString,func,children)
+  {
+    addListener.call(this,scopeString,func,false,children);
+    return model;
+  }
+
+  model.addDataUpdateListener = function(scopeString,func,children)
+  {
+    addListener.call(this,scopeString,func,true,children);
+    return model;
+  }
+
+  function dataCreate(func,remove)
+  {
+    if(!(this.toString() === model.toString()))
+    {
+      if(!remove)
+      {
+        this.__kbdatacreatelisteners.push(func);
       }
       else
       {
-
+        loop:for(var x=0,len=this.__kbdatacreatelisteners.length;x<len;x++)
+        {
+          if(this.__kbdatacreatelisteners[x].toString() === func.toString())
+          {
+            this.__kbdatacreatelisteners.splice(x,1);
+            break loop;
+          }
+        }
+      }
+    }
+    else
+    {
+      if(!remove)
+      {
+        _dataAddedListeners.push(func);
+      }
+      else
+      {
+        loop:for(var x=0,len=_dataAddedListeners.length;x<len;x++)
+        {
+          if(_dataAddedListeners[x].toString() === func.toString())
+          {
+            _dataAddedListeners.splice(x,1);
+            break loop;
+          }
+        }
       }
     }
   }
 
-  function addChildPropertyListener(prop,func)
+  model.addDataCreateListener = function(func)
   {
-    model.addPropertyListener.call(this,prop,func,true);
+    dataCreate.call(this,func);
+    return model;
   }
 
-  function addChildPropertyUpdateListener(prop,func)
+  model.removeDataCreateListener = function(func)
   {
-    model.addPropertyUpdateListener.call(this,prop,func,true);
+    dataCreate.call(this,func,true);
+    return model;
   }
 
-  model.addPropertyListener = function(scopeString,func,children)
+  function removeListener(prop,func,update,child)
   {
-    addListener.call(this,scopeString,func,false,children);
+    var _listeners;
+    if(!(this.toString() === model.toString()))
+    {
+      if(!child)
+      {
+        _listeners = (update ? this.__kbupdatelisteners : this.__kblisteners);
+        loop:for(var x=0,len=_listeners[prop].length;x<len;x++)
+        {
+          if(_listeners[prop][x].toString() === func.toString())
+          {
+            _listeners[prop].splice(x,1);
+            break loop;
+          }
+        }
+      }
+      else
+      {
+        parentloop(this,prop,func,update,true,true);
+      }
+    }
+    else
+    {
+      _listeners = (update ? _dataUpdateListeners : _dataListeners);
+      loop:for(var x=0,len=_listeners[prop].length;x<len;x++)
+      {
+        if(_listeners[prop][x].toString() === func.toString())
+        {
+          _listeners[prop].splice(x,1);
+          break loop;
+        }
+      }
+    }
   }
 
-  model.addPropertyUpdateListener = function(scopeString,func,children)
+  function removeChildDataListener(prop,func)
   {
-    addListener.call(this,scopeString,func,true,children);
+    model.removeDataListener.call(this,prop,func,true);
+  }
+
+  function removeChildDataUpdateListener(prop,func)
+  {
+    model.removeDataUpdateListener.call(this,prop,func,true);
+  }
+
+  model.removeDataListener = function(scopeString,func,children)
+  {
+    removeListener.call(this,scopeString,func,false,children);
+    return model;
+  }
+
+  model.removeDataUpdateListener = function(scopeString,func,children)
+  {
+    removeListener.call(this,scopeString,func,true,children);
+    return model;
   }
 
   return model;

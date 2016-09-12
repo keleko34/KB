@@ -249,6 +249,10 @@ define([],function(){
     return function standardSet(v)
     {
        _oldValue = _descGet.call(this);
+       if(v.toString() === _oldValue.toString())
+       {
+         return;
+       }
        if(_set(this,_key,v,_oldValue))
        {
          _descSet.call(this,v);
@@ -268,6 +272,10 @@ define([],function(){
     return function valueSet(v)
     {
       _oldValue = _descriptor.value;
+      if(v.toString() === _oldValue.toString())
+      {
+        return;
+      }
       if(_set(this,_key,v,_oldValue,arguments))
       {
         _descriptor.value = v;
@@ -986,24 +994,24 @@ define([],function(){
           value = (isCheck ? (typeof this.checked === 'string' ? this.checked : (this.checked ? "true" : "false")) : this.value);
           if(isCheck)
           {
-            if(!_injectedObj.set(this,'checked',this.checked,oldValue))
+            if(!_injectedObj.set(this,'checked',value,oldValue))
             {
               _descriptors['checked'].set.call(this,oldValue);
             }
             else
             {
-              _injectedObj.update(this,'checked',this.checked,oldValue);
+              _injectedObj.update(this,'checked',value,oldValue);
             }
           }
           this.value = value;
 
-          if(!_injectedObj.set(this,'value',this.value,oldValue))
+          if(!_injectedObj.set(this,'value',value,oldValue))
           {
             _descriptors['value'].set.call(this,oldValue);
           }
           else
           {
-            _injectedObj.update(this,'value',this.checked,oldValue);
+            _injectedObj.update(this,'value',value,oldValue);
           }
         }).bind(this),0);
 
