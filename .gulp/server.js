@@ -19,6 +19,10 @@ module.exports = function()
         }
       }
     }
+    if(req.url.indexOf('/component') === 0)
+    {
+
+    }
     return next();
   }
 
