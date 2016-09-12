@@ -4,13 +4,26 @@ define([],function(){
       _viewmodels = {},
       _dataListeners = {},
       _dataUpdateListeners = {},
-      _set = function()
+      _set = function(local,key,value,oldValue,name,obj,scopeString)
       {
+        var e = _changeEvent(_viewmodels[name],name,obj,value,oldValue,scopeString,key);
 
+        if(e._preventDefault) return false;
+        return true;
       },
-      _update = function()
+      _update = function(local,key,value,oldValue,name,obj,scopeString)
       {
+        var e = _changeEvent(_viewmodels[name],name,obj,value,oldValue,scopeString,key);
 
+        if(e._preventDefault) return false;
+        return true;
+      },
+      _added = function(local,key,value,oldValue,name,obj,scopeString)
+      {
+        var e = _changeEvent(_viewmodels[name],name,obj,value,oldValue,scopeString,key);
+
+        if(e._preventDefault) return false;
+        return true;
       }
 
   function splitScopeString(str)
@@ -25,14 +38,14 @@ define([],function(){
 
   function getScopeString(obj,prop)
   {
-    var scope =(isObject(obj) ? obj.__kbscopeString : (typeof obj === 'string' ? obj : ''));
+    var scope =((isObject(obj) || isArray(obj)) ? obj.__kbscopeString : (typeof obj === 'string' ? obj : ''));
     if(isArray(obj))
     {
       return scope+"["+prop+"]";
     }
     else
     {
-      return (scope.length !== 0 "."+prop ? : "prop");
+      return (scope.length !== 0 ? "."+ prop : prop);
     }
   }
 
@@ -82,7 +95,7 @@ define([],function(){
     return obj2;
   }
 
-  function _changeEvent(viewmodel,name,obj,value,oldValue,scopeString,key,args,action)
+  function _changeEvent(viewmodel,name,obj,local,value,oldValue,scopeString,key,args,action)
   {
     this.stopPropagation = function(){this._stopPropogation = true;};
     this.preventDefault = function(){this._preventDefault = true;};
@@ -100,7 +113,7 @@ define([],function(){
   function setNormal(val,key,set,update,name,obj,scopeString)
   {
     var _val = val,
-        _key = prop,
+        _key = key,
         _set = set,
         _update = update,
         _name = name,
@@ -115,6 +128,10 @@ define([],function(){
        if(_set(this,_key,v,_oldValue,_name,_obj,_scopeString))
        {
          _val = v;
+         if(isObject(v) || isArray(v))
+         {
+           model.createObservable(_name,this,_key);
+         }
        }
        _update(this,_key,v,_oldValue,_name,_obj,_scopeString);
 
@@ -136,15 +153,15 @@ define([],function(){
       {
         loopCreateObservable(obj[prop],keys[x],val);
       }
-      val.__kbname = (obj.__kbname !== undefined ? obj.__kbname : obj);
+      val.__kbname = (obj.__kbname !== undefined ? obj.__kbname : "");
       val.__kbref = (obj.__kbref !== undefined ? obj.__kbref : obj);
-      val.__kbscopeString = (obj.__kbscopeString ? getScopeString(obj.__kbscopeString,val) : "");
+      val.__kbscopeString = ((obj.__kbscopeString || obj.__kbscopeString.length === 0) ? getScopeString(obj.__kbscopeString,prop) : "");
       val.toJSON = function(){
         return deepCopy(this,{},function(k,v){
           if(k !== '__kbref' && k !== '__kbname' && k !== '__kbscopeString') return v;
         });
       }
-      Object.define((set || obj),prop,setNormal(val,prop,_set,_update,obj.__kbname,obj.__kbref,obj.__kbscopeString));
+      Object.defineProperty((set || obj),prop,setNormal(val,prop,_set,_update,obj.__kbname,obj.__kbref,obj.__kbscopeString));
     }
     else if(isArray(obj[prop]))
     {
@@ -153,20 +170,20 @@ define([],function(){
       {
         loopCreateObservable(obj[prop],x,val);
       }
-      val.__kbname = (obj.__kbname !== undefined ? obj.__kbname : obj);
+      val.__kbname = (obj.__kbname !== undefined ? obj.__kbname : "");
       val.__kbref = (obj.__kbref !== undefined ? obj.__kbref : obj);
-      val.__kbscopeString = (obj.__kbscopeString ? getScopeString(obj.__kbscopeString,val) : "");
+      val.__kbscopeString = ((obj.__kbscopeString || obj.__kbscopeString.length === 0)  ? getScopeString(obj.__kbscopeString,prop) : "");
       val.toJSON = function(){
         return deepCopy(this,{},function(k,v){
           if(k !== '__kbref' && k !== '__kbname' && k !== '__kbscopeString') return v;
         });
       }
-      Object.define((set || obj),prop,setNormal((set || obj),prop,_set,_update,obj.__kbname,obj.__kbref,obj.__kbscopeString));
+      Object.defineProperty((set || obj),prop,setNormal(val,prop,_set,_update,obj.__kbname,obj.__kbref,obj.__kbscopeString));
     }
     else
     {
       val = obj[prop];
-      Object.define((set || obj),prop,setNormal((set || obj),prop,_set,_update,obj.__kbname,obj.__kbref,obj.__kbscopeString));
+      Object.defineProperty((set || obj),prop,setNormal(val,prop,_set,_update,obj.__kbname,obj.__kbref,obj.__kbscopeString));
     }
     return (set || obj);
   }
@@ -190,7 +207,10 @@ define([],function(){
         if(!isObservable(arr,x))
         {
           model.createObservable(arr.__kbname,arr,x);
-          /* should send an update script here, like itemAdded */
+          if(!_added(arr,x,arr[x],undefined,arr.__kbname,arr.__kbref,arr.__kbscopeString))
+          {
+            arr.remove(x);
+          }
         }
       }
     }
@@ -253,15 +273,41 @@ define([],function(){
     }
 
     /* add our own methods for adding and removing and keeping the values observable */
-    arr.add = function()
+    arr.add = function(val)
     {
-
+      Object.defineProperty(arr,(arr.length),setNormal(val,(arr.length),_set,_update,arr.__kbname,arr.__kbref,arr.__kbscopeString));
+      if(!_added(arr,(arr.length),val,undefined,arr.__kbname,arr.__kbref,arr.__kbscopeString))
+      {
+        arr.remove((arr.length-1));
+      }
+      return arr;
     }
 
-    arr.remove = function()
+    arr.remove = function(val)
     {
-
+      if(arr.indexOf(val) !== undefined)
+      {
+        arr.splice(arr.indexOf(val),1);
+      }
+      else if(typeof val === 'number')
+      {
+        arr.splice(val,1);
+      }
+      return arr;
     }
+
+    arr.toJSON = function(val)
+    {
+      return deepCopy(this,[],function(k,v)
+      {
+        if(k !== '__kbref' && k !== '__kbname' && k !== '__kbscopeString') return v;
+      });
+    }
+
+    arr.addPropertyListener = model.addPropertyListener;
+    arr.addPropertyUpdateListener = model.addPropertyUpdateListener;
+    arr.addChildPropertyListener = addChildPropertyListener;
+    arr.addChildPropertyUpdateListener = addChildPropertyUpdateListener;
 
     return arr;
   }
@@ -270,14 +316,20 @@ define([],function(){
   {
     var obj = {};
 
-    obj.add = function()
+    obj.add = function(prop,val)
     {
-
+      Object.defineProperty(obj,prop,setNormal(val,prop,_set,_update,obj.__kbname,obj.__kbref,obj.__kbscopeString));
+      if(!_added(obj,prop,val,undefined,obj.__kbname,obj.__kbref,obj.__kbscopeString))
+      {
+        obj.remove(prop);
+      }
+      return obj;
     }
 
-    obj.remove = function()
+    obj.remove = function(prop)
     {
-
+      obj[prop] = undefined;
+      return obj;
     }
 
     obj.stringify = function()
@@ -285,7 +337,20 @@ define([],function(){
       return JSON.stringify(obj);
     }
 
-    return {};
+    obj.toJSON = function(val)
+    {
+      return deepCopy(this,{},function(k,v)
+      {
+        if(k !== '__kbref' && k !== '__kbname' && k !== '__kbscopeString') return v;
+      });
+    }
+
+    obj.addPropertyListener = model.addPropertyListener;
+    obj.addPropertyUpdateListener = model.addPropertyUpdateListener;
+    obj.addChildPropertyListener = addChildPropertyListener;
+    obj.addChildPropertyUpdateListener = addChildPropertyUpdateListener;
+
+    return obj;
   }
 
   model.createObservable = function(name,obj,prop)
@@ -329,21 +394,60 @@ define([],function(){
 
   model.isObservable = isObservable;
 
-  model.setViewModel = function(name,data)
+  model.viewmodel = function(name,data)
   {
-    if(isObject(data))
+    if(!model.isRegistered(name))
     {
-
+      if(isObject(data))
+      {
+        var _keys = Object.keys(data),
+            x;
+        _viewmodels[name] = eval("(function(){"
+                                 +"return function "+name+"(){"
+                                 +"for(x=0,len=_keys.length;x<len;x++){this[_keys[x]] = data[_keys[x]];}"
+                                 +"};"
+                                 +"}())");
+      }
+      else if(typeof data === 'function')
+      {
+        _viewmodels[name] = data;
+      }
     }
-    else if(data === 'function')
+    else
     {
+      console.error("A Viewmodel by the name ",name," already exists");
+    }
+  }
 
+  model.createViewModel = function(name,params)
+  {
+    if(model.isRegistered(name))
+    {
+      var _vm = Object.create(_viewmodels[name].prototype);
+          _viewmodels[name].apply(_vm,params);
+          var vmKeys = Object.keys(_vm),
+          obsv = model.observableObject();
+      obsv.__proto__ = _vm.__proto__;
+      obsv.__kbname = name;
+      obsv.__kbref = obsv;
+      obsv.__kbscopeString = "";
+      for(var x=0,len=vmKeys.length;x<len;x++)
+      {
+        obsv[vmKeys[x]] = _vm[vmKeys[x]];
+        model.createObservable(name,obsv,vmKeys[x]);
+      }
+      obsv.constructor = _viewmodels[name];
+      return obsv;
+    }
+    else
+    {
+      console.error("There is no viewmodel by the name ",name);
     }
   }
 
   model.isRegistered = function(name)
   {
-
+    return (_viewmodels[name] !== undefined);
   }
 
   model.getModel = function()
@@ -351,21 +455,51 @@ define([],function(){
     return _model;
   }
 
-
-
-
-
-
-
-  model.setToModel = function(attr,value)
+  function addListener(prop,func,update,child)
   {
+    if(!update)
+    {
+      if(child)
+      {
 
+      }
+      else
+      {
+
+      }
+    }
+    else
+    {
+      if(child)
+      {
+
+      }
+      else
+      {
+
+      }
+    }
   }
 
-  model.setViewModel = function(el,vm)
+  function addChildPropertyListener(prop,func)
   {
-
+    model.addPropertyListener.call(this,prop,func,true);
   }
 
-  return viewmodel;
+  function addChildPropertyUpdateListener(prop,func)
+  {
+    model.addPropertyUpdateListener.call(this,prop,func,true);
+  }
+
+  model.addPropertyListener = function(scopeString,func,children)
+  {
+    addListener.call(this,scopeString,func,false,children);
+  }
+
+  model.addPropertyUpdateListener = function(scopeString,func,children)
+  {
+    addListener.call(this,scopeString,func,true,children);
+  }
+
+  return model;
 });
