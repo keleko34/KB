@@ -31,7 +31,7 @@ define([],function(){
   {
     if(_templates[name] === undefined)
     {
-      _templates[name] = '<div class="component-wrapper" data-component="'+name+'">'+template+"</div>";
+      _templates[name] = template;
     }
     else
     {
@@ -44,5 +44,5 @@ define([],function(){
   {
     return _templates[name];
   }
-
+  return templates;
 });

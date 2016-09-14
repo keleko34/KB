@@ -705,89 +705,92 @@ define([],function(){
 
     function reSync(e)
     {
-      var attrListeners = e.target.attrListeners(),
-          _hasInput = hasInput(attrListeners),
-          _hasStyle = hasStyle(attrListeners),
-          _hasStyleLen = _hasStyle.length,
-          _parentAttr,
-          _parentAttrUpdate,
-          _parentStyle,
-          _parentStyleUpdate,
-          _listeners,
-          nodes = [],
-          len,
-          outer = ((e.attr === 'outerHTML' || e.attr === 'outerText') ? e.attr : undefined),
-          target = e.target
-
-      if(outer !== undefined)
+      if(e.target.nodeType !== 3 && e.target.nodeType !== 8)
       {
-        e.attr = 'appendChild',
-        e.arguments = [e.target];
-        e.target = e.target.parentElement;
-      }
+        var attrListeners = e.target.attrListeners(),
+            _hasInput = hasInput(attrListeners),
+            _hasStyle = hasStyle(attrListeners),
+            _hasStyleLen = _hasStyle.length,
+            _parentAttr,
+            _parentAttrUpdate,
+            _parentStyle,
+            _parentStyleUpdate,
+            _listeners,
+            nodes = [],
+            len,
+            outer = ((e.attr === 'outerHTML' || e.attr === 'outerText') ? e.attr : undefined),
+            target = e.target
 
-      if(_hasInput)
-      {
+        if(outer !== undefined)
+        {
+          e.attr = 'appendChild',
+          e.arguments = [e.target];
+          e.target = e.target.parentElement;
+        }
+
+        if(_hasInput)
+        {
+          if(e.attr === 'appendChild')
+          {
+            nodes = Array.prototype.slice.call(e.arguments[0].querySelectorAll('input,textarea'));
+            if(e.arguments[0].tagName === 'INPUT' || e.arguments[0].tagName === 'TEXTAREA')
+            {
+              nodes.unshift(e.arguments[0])
+            }
+          }
+          else
+          {
+            nodes = Array.prototype.slice.call(e.target.querySelectorAll('input,textarea'));
+          }
+          len = nodes.length;
+          for(var x=0;x<len;x++)
+          {
+            if(nodes[x].addInputBinding !== undefined) nodes[x].addInputBinding();
+            if(nodes[x].addInputBoxBinding !== undefined) nodes[x].addInputBoxBinding();
+          }
+        }
+
         if(e.attr === 'appendChild')
         {
-          nodes = Array.prototype.slice.call(e.arguments[0].querySelectorAll('input,textarea'));
-          if(e.arguments[0].tagName === 'INPUT' || e.arguments[0].tagName === 'TEXTAREA')
-          {
-            nodes.unshift(e.arguments[0])
-          }
+          nodes = Array.prototype.slice.call(e.arguments[0].querySelectorAll('*'));
+          nodes.unshift(e.arguments[0]);
+          _parentAttr = e.target.__kb._parentAttrListeners;
+          _parentAttrUpdate = e.target.__kb._parentAttrUpdateListeners;
+          _parentStyle = e.target.__kb._parentStyleListeners;
+          _parentStyleUpdate = e.target.__kb._parentStyleUpdateListeners;
         }
         else
         {
-          nodes = Array.prototype.slice.call(e.target.querySelectorAll('input,textarea'));
+          nodes = Array.prototype.slice.call(e.target.querySelectorAll('*'));
+          _parentAttr = e.target.__kb._parentAttrListeners;
+          _parentAttrUpdate = e.target.__kb._parentAttrUpdateListeners;
+          _parentStyle = e.target.__kb._parentStyleListeners;
+          _parentStyleUpdate = e.target.__kb._parentStyleUpdateListeners;
         }
         len = nodes.length;
-        for(var x=0;x<len;x++)
-        {
-          if(nodes[x].addInputBinding !== undefined) nodes[x].addInputBinding();
-          if(nodes[x].addInputBoxBinding !== undefined) nodes[x].addInputBoxBinding();
-        }
-      }
 
-      if(e.attr === 'appendChild')
-      {
-        nodes = Array.prototype.slice.call(e.arguments[0].querySelectorAll('*'));
-        nodes.unshift(e.arguments[0]);
-        _parentAttr = e.target.__kb._parentAttrListeners;
-        _parentAttrUpdate = e.target.__kb._parentAttrUpdateListeners;
-        _parentStyle = e.target.__kb._parentStyleListeners;
-        _parentStyleUpdate = e.target.__kb._parentStyleUpdateListeners;
-      }
-      else
-      {
-        nodes = Array.prototype.slice.call(e.target.querySelectorAll('*'));
-        _parentAttr = e.target.__kb._parentAttrListeners;
-        _parentAttrUpdate = e.target.__kb._parentAttrUpdateListeners;
-        _parentStyle = e.target.__kb._parentStyleListeners;
-        _parentStyleUpdate = e.target.__kb._parentStyleUpdateListeners;
-      }
-      len = nodes.length;
-
-        for(var x=0;x<len;x++)
-        {
-          if(_hasStyleLen !== 0)
+          for(var x=0;x<len;x++)
           {
-            for(var i=0;i<_hasStyleLen;i++)
+            if(_hasStyleLen !== 0)
             {
-              bind.injectStyleProperty(nodes[x],_hasStyle[i]);
+              for(var i=0;i<_hasStyleLen;i++)
+              {
+                bind.injectStyleProperty(nodes[x],_hasStyle[i]);
+              }
             }
+            _listeners = nodes[x].attrListeners();
+            _listeners._parentAttrListeners = _parentAttr;
+            _listeners._parentAttrUpdateListeners = _parentAttrUpdate;
+            _listeners._parentStyleListeners = _parentStyle;
+            _listeners._parentStyleUpdateListeners = _parentStyleUpdate;
           }
-          _listeners = nodes[x].attrListeners();
-          _listeners._parentAttrListeners = _parentAttr;
-          _listeners._parentAttrUpdateListeners = _parentAttrUpdate;
-          _listeners._parentStyleListeners = _parentStyle;
-          _listeners._parentStyleUpdateListeners = _parentStyleUpdate;
-        }
 
-      if(outer !== undefined)
-      {
-        e.attr = outer;
-        e.target = target;
-        e.arguments = [];
+        if(outer !== undefined)
+        {
+          e.attr = outer;
+          e.target = target;
+          e.arguments = [];
+        }
       }
     }
 

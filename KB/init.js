@@ -1,4 +1,4 @@
-define(['./bind_dom','./bind_viewmodel'],function(bind_dom,bind_viewmodel){
+define(['./instance'],function(instance){
 
   /* BUILD */
   /* END BUILD */
@@ -8,6 +8,8 @@ define(['./bind_dom','./bind_viewmodel'],function(bind_dom,bind_viewmodel){
     return init;
   }
 
+  init.instance = instance();
+  /*
   init.binder = bind_dom.call(bind_dom);
   init.addAttrListener = init.binder.addAttrListener.bind(init.binder);
   init.addAttrUpdateListener = init.binder.addAttrUpdateListener.bind(init.binder);
@@ -18,6 +20,7 @@ define(['./bind_dom','./bind_viewmodel'],function(bind_dom,bind_viewmodel){
   init.addDataListener = bind_viewmodel.addDataListener.bind(init.viewmodels);
   init.addDataUpdateListener = bind_viewmodel.addDataUpdateListener.bind(init.viewmodels);
   init.addDataCreateListener = bind_viewmodel.addDataCreateListener.bind(init.viewmodels);
+  */
 
   return init;
 });

@@ -5,170 +5,48 @@
     <script type="text/javascript" src="../bower_components/requirejs/require.js"></script>
   </head>
   <body>
-    <h1 id="testDiv">Test Title</h1>
-    <input id="testInput" type="text" />
-    <input id="testInputBox" type="checkbox" />
-    <input id="testInputRadio" type="radio" />
-    <textarea id="testTextarea"></textarea>
-    <div id="testDisplay"></div>
-    
-    <div id="parent">
-      <div id="child1">
-        <div id="subchild1"></div>
-      </div>
-      <div id="child2"></div>
-    </div>
+    <cool coolio="coolest"></cool>
+    <something>
+      Some inner Text
+    </something>
     <script type="text/javascript">
       require([('./KB/init.js'+location.search)],function(kb){
-        var testDisplay = document.getElementById('testDisplay'),
-            testInput = document.getElementById('testInput'),
-            textAreaInput = document.getElementById('testTextarea'),
-            parent = document.getElementById('parent'),
-            subChild1 = document.getElementById('subchild1'),
-            kb = kb();
 
-        kb.addAttrListener("checked",function(e){
-          console.log(e);
-        })
-        .addAttrListener('value',function(e){
-          if(e.value === 'cool')
-          {
-            e.preventDefault();
-            return;
-          }
-          testDisplay.innerHTML = e.value;
-        })
-        .addAttrListener('appendChild',function(e){
-          //console.log(e);
-        })
-        .addAttrListener('innerHTML',function(e){
-          //console.log(e); //fires when input value changes
-        })
-        .addAttrListener('add',function(e){
-          //console.log(e);
-          if(e.arguments[0]+e.arguments[1] === 10)
-          {
-            e.preventDefault();
-          }
-        })
-        .addAttrListener("*",function(e){
-          //console.log(e);
-        })
-        .addAttrListener("class",function(e){
-          if(e.value === 'cool') e.preventDefault();
-        })
-        .addAttrListener("cool",function(e){
-          //console.log('tying to set cool');
-          e.preventDefault();
-        })
 
-        parent.addChildAttrListener('background',function(e){
-          //if(e.child.id !== 'subchild1') console.log("preventing",e.child);
-          e.preventDefault();
-        })
-        .addChildAttrListener('innerHTML',function(e){
-          //if(e.child.id !== 'subchild1') console.log('appending',e.value,' to ',e.child);
-        })
 
-        function myObject(){};
 
-        myObject.prototype.add = function(a,b){return a+b;};
+        var coolTemplate = '<div class="{{classname | class}}"><input value="{{coolio}}" /></div>',
+            coolViewModel = function()
+            {
+              this.classname = "cool-bar";
+              this.filters.class = (function(){
+                var d = "cool";
+                return function(v){
+                  return d+(v.length !== 0 ? ' ' : '')+v;
+                }
+              }());
+              this.coolio = "yay";
+            },
+            somethingTemplate = '<div class="{{classname | class}}"><h1>Title</h1><p>- {{html}}</p><cool coolio="something"></cool></div>',
+            somethingViewModel = function(){
+              this.classname = "something-bar";
+              this.filters.class = (function(){
+                var d = "something";
+                return function(v){
+                  return d+(v.length !== 0 ? ' ' : '')+v;
+                }
+              }());
+            }
 
-        kb.binder.injectPrototypes(myObject);
 
-        var x = 0;
+        kb.instance.add('cool',coolViewModel,coolTemplate);
+        kb.instance.add('something',somethingViewModel,somethingTemplate);
 
-        var test = new myObject();
-        var out = test.add(5,5);
-        console.log(out);
+        var t = kb.instance.create('cool','',{coolio:"coolest"});
+        document.body.appendChild(t);
 
-        for(x=0;x<1000;x++){
-          parent.setAttribute('cool','something')
-        }
-
-        for(x=0;x<1000;x++){
-          subChild1.innerHTML = Math.random();
-        }
-
-        for(x=0;x<1000;x++){
-          subChild1.style.background = "#000";
-        }
-
-        subChild1.className = 'something';
-        subChild1.setAttribute('class','cool');
-
-        for(x=0;x<10;x++){
-          subChild1.appendChild(document.createElement('div'));
-          subChild1.children[(subChild1.children.length-1)].style.background = '#F00';
-          subChild1.children[(subChild1.children.length-1)].innerHTML = 'text';
-        }
-
-        for(x=0;x<2;x++){
-          subChild1.appendChild(document.createElement('input'));
-          subChild1.children[(subChild1.children.length-1)].style.background = '#F00';
-        }
-
-        function cool()
-        {
-          this.yay = "cool";
-          this.cool = 500;
-        }
-
-        cool.prototype.gimme = function()
-        {
-          return ""+this.yay+" "+this.cool;
-        }
-
-        var yay = {
-          arr:[20,50,30],
-          cool:500,
-          something:"something",
-          why:false
-        };
-
-        kb.setViewModel('cool',cool);
-        kb.setViewModel('yay',yay);
-
-        var t = kb.createViewModel('cool'),
-            q = kb.createViewModel('yay');
-
-        kb.addDataCreateListener(function(e){
-          console.log("created prop ",e.key," on ",e.localScope," with value ",e.value);
-        })
-        .addDataListener('*',function(e){
-          //console.log(e);
-        });
-
-        q.addDataListener('arr[0]',function(e){
-          console.log("we had a change on arr index 0",e.value, " old ",e.oldValue);
-        })
-
-        q.arr.add(40);
-        q.arr.push(500);
-        q.arr = [400,20];
-        console.log(q.arr,Object.keys(q.arr));
-        q.add('coolest',1000);
-
-        q.arr[0] = 100;
-
-        kb.addAttrUpdateListener('value',function(e){
-          t.yay = e.value;
-          //console.log(t.gimme());
-        });
-        t.addDataUpdateListener('yay',function(e){
-          testInput.value = e.value;
-        })
-        q.addChildDataListener(0,function(e){
-
-          //console.log("child changed",e.value);
-        })
-
-        q.arr[0] = 500;
-
-        for(var x=0;x<1000;x++)
-        {
-          testInput.value = Math.random()*1000;
-        }
+        var t = kb.instance.create('something','Some inner Text');
+        document.body.appendChild(t);
       })
     </script>
   </body>

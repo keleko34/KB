@@ -820,6 +820,33 @@ define([],function(){
 
   model.isObservable = isObservable;
 
+  model.getScopeString = getScopeString;
+
+  model.getScope = function(viewmodel,scopeString)
+  {
+    var split = splitScopeString(scopeString),
+        currentvalue = viewmodel;
+    for(var x=0,len=split.length;x<len;x++)
+    {
+      if(currentvalue[split[x]] === undefined) return console.error("You attempted to bind to a property on the viewmodel that is undefined, bind:",scopeString," property: ",split[x]);
+      currentvalue = currentvalue[split[x]];
+    }
+    return currentvalue;
+  }
+
+  model.setScope = function(viewmodel,scopeString,value)
+  {
+    var split = splitScopeString(scopeString),
+        currentvalue = viewmodel;
+    for(var x=0,len=(split.length-1);x<len;x++)
+    {
+      if(currentvalue[split[x]] === undefined) return console.error("You attempted to bind to a property on the viewmodel that is undefined, bind:",scopeString," property: ",split[x]);
+      currentvalue = currentvalue[split[x]];
+    }
+    currentvalue[split[(split.length-1)]] = value;
+    return model;
+  }
+
   model.viewmodel = function(name,data)
   {
     if(!model.isRegistered(name))
@@ -846,20 +873,28 @@ define([],function(){
     return model;
   }
 
-  model.createViewModel = function(name,params,extensions)
+  model.createViewModel = function(name,params,preextensions,postextensions)
   {
     if(model.isRegistered(name))
     {
       var _vm = Object.create(_viewmodels[name].prototype);
-          if(extensions !== undefined && isObject(extensions))
+          if(preextensions !== undefined && isObject(preextensions))
           {
-            var exts = Object.keys(extensions);
+            var exts = Object.keys(preextensions);
             for(var x=0,len=exts.length;x<len;x++)
             {
-              _vm[exts[x]] = extensions[exts[x]];
+              _vm[exts[x]] = preextensions[exts[x]];
             }
           }
           _viewmodels[name].apply(_vm,params);
+          if(postextensions !== undefined && isObject(postextensions))
+          {
+            var exts = Object.keys(postextensions);
+            for(var x=0,len=exts.length;x<len;x++)
+            {
+              _vm[exts[x]] = postextensions[exts[x]];
+            }
+          }
           var vmKeys = Object.keys(_vm),
           obsv = model.observableObject();
       obsv.__proto__ = _vm.__proto__;

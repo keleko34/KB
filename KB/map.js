@@ -1,12 +1,12 @@
 define([],function(){
 
-  var _start = "{",
-      _end = "}",
+  var _start = "{{",
+      _end = "}}",
       _filters = {};
 
   var regTest = new RegExp('('+_start+'(.*?)'+_end+')','g'),
       regStrip = new RegExp('(\\'+_end+'.*)|(\\|.*)','g'),
-      regreplace = new RegExp('['+_start+_end+']','g');
+      regreplace = new RegExp('['+_start+'\\s'+_end+']','g');
 
   function set(value)
   {
@@ -17,13 +17,12 @@ define([],function(){
     for(var x=0,len=_bind.filters.length;x<len;x++)
     {
       value = (typeof _binder.filters[_bind.filters[x]] === 'function' ? _binder.filters[_bind.filters[x]](value) : (_filters[_bind.filters[x]] !== undefined ? _filters[_bind.filters[x]](value) : value));
-
     }
 
     _bind.value = value;
 
-    _binder.target[_binder.property] = _binder.texts.reduce(function(str,k){
-      if(regTest.test(k))
+    _binder.target[_binder.prop] = _binder.texts.reduce(function(str,k){
+      if(k.match(regTest))
       {
         var name = k.replace(regStrip,'$1').replace(regreplace,'');
         str += _binder.binds[name].value;
@@ -70,6 +69,16 @@ define([],function(){
     return binds;
   }
 
+  function splitFor(b)
+  {
+    var reg = new RegExp('[\\'+_start+'\\s\\'+_end+']','g'),
+        split = b.split(reg);
+    return {
+      key:split[1],
+      bind:split[3]
+    };
+  }
+
   function map()
   {
 
@@ -88,16 +97,16 @@ define([],function(){
       {
         if(childNodes[x].nodeType === 3)
         {
-          if(regTest.test(childNodes[x].textContent))
+          if(childNodes[x].textContent.match(regTest))
           {
             split = splitMap(childNodes[x].textContent);
-            bind = {text:childNodes[x].textContent,texts:split,binds:{},filters:{},target:childNodes[x],prop:'textContent',element:childNodes[x]};
+            bind = {text:childNodes[x].textContent,texts:split,binds:{},filters:{},target:childNodes[x],prop:'textContent',element:childNodes[x],listener:"textContent"};
 
             bind.binds = split.reduce(function(O,k){
-              if(regTest.test(k))
+              if(k.match(regTest))
               {
                 var name = k.replace(regStrip,'$1').replace(regreplace,'');
-                O[name] = {text:k,value:"",filters:splitFilter(k),set:set.bind({name:name,binder:bind})});
+                O[name] = {text:k,value:"",filters:splitFilter(k),set:set.bind({name:name,binder:bind})};
               }
               return O;
             },{});
@@ -112,16 +121,30 @@ define([],function(){
             attrs = childNodes[x].attributes;
             for(var i=0,lenn=attrs.length;i<lenn;i++)
             {
-              if(regTest.test(attrs[x].value))
+              if(attrs[x].value.match(regTest))
               {
-                split = splitMap(attrs[x].value);
-                binds.push({texts:split,binds:split.reduce(function(O,k){
-                  if(regTest.test(k)) O.push({name:k.replace(regStrip,'$1').replace(regreplace,''),text:k,filters:splitFilter(k)});
-                  return O;
-                },[]),target:attrs[x],prop:'value',element:childNodes[x]});
+                if(attrs[x].name === 'data-bind')
+                {
+                  split = splitFor(attrs[x].value);
+                  binds.push({text:attrs[x].value,texts:split,target:attrs[x],prop:'for',element:childNodes[x]});
+                }
+                else
+                {
+                  split = splitMap(attrs[x].value);
+                  bind = {text:attrs[x].value,texts:split,binds:{},target:attrs[x],prop:'value',element:childNodes[x],listener:attrs[x].name};
+                  bind.binds = split.reduce(function(O,k){
+                    if(k.match(regTest))
+                    {
+                      var name = k.replace(regStrip,'$1').replace(regreplace,'');
+                      O[name] = {text:k,value:"",filters:splitFilter(k),set:set.bind({name:name,binder:bind})};
+                    }
+                    return O;
+                  },{});
+                  binds.push(bind);
+                }
               }
             }
-            binds.concat(loopCheck(childNodes[x].childNodes));
+            if(childNodes[x].childNodes.length !== 0) binds = binds.concat(loopCheck(childNodes[x].childNodes));
           }
         }
       }
