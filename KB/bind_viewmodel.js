@@ -846,11 +846,19 @@ define([],function(){
     return model;
   }
 
-  model.createViewModel = function(name,params)
+  model.createViewModel = function(name,params,extensions)
   {
     if(model.isRegistered(name))
     {
       var _vm = Object.create(_viewmodels[name].prototype);
+          if(extensions !== undefined && isObject(extensions))
+          {
+            var exts = Object.keys(extensions);
+            for(var x=0,len=exts.length;x<len;x++)
+            {
+              _vm[exts[x]] = extensions[exts[x]];
+            }
+          }
           _viewmodels[name].apply(_vm,params);
           var vmKeys = Object.keys(_vm),
           obsv = model.observableObject();
