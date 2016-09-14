@@ -20,6 +20,8 @@ define([],function(){
     return templates;
   }
 
+  templates.checkUnkownElements = getUnkownTemplates;
+
   templates.isRegistered =  function(name)
   {
     return (_templates[name] !== undefined);
