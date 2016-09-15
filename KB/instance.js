@@ -107,18 +107,7 @@ define(['./bind_viewmodel','./template','./map','./bind_dom'],function(bind_view
         {
           for(var x=0,len=val.length;x<len;x++)
           {
-            if(!instance.viewmodels.isObject(val[x]))
-            {
-              obj = {};
-              obj.index = val[x];
-            }
-            else
-            {
-              obj = val[x];
-            }
-            (function(val,x){
-              div.appendChild(instance.create(map.binds.component,'',obj,{listener:val,placement:x,parent:div,component:map.binds.component}));
-            }(val,x));
+            div.appendChild(instance.create(map.binds.component,'',{},{key:map.binds.key,listener:val,placement:x,parent:div,component:map.binds.component}));
           }
           return false;
         }
@@ -178,26 +167,83 @@ define(['./bind_viewmodel','./template','./map','./bind_dom'],function(bind_view
 
   instance.create = function(name,innerHTML,attrs,loop)
   {
-    var preAttach = {filters:{}},
-        postAttach = {},
+    var preAttach = instance.viewmodels.observableObject(),
+        postAttach = instance.viewmodels.observableObject(),
         template = instance.templates.getTemplate(name),
         frag = document.createDocumentFragment();
 
-    if(innerHTML !== undefined) postAttach.innerHTML = innerHTML;
+    preAttach.add('filters',instance.viewmodels.observableObject());
+
+    if(innerHTML !== undefined) postAttach.add('innerHTML',innerHTML);
     if(attrs !== undefined)
     {
       var keys = Object.keys(attrs);
 
       for(var x=0,len=keys.length;x<len;x++)
       {
-        postAttach[keys[x]] = attrs[keys[x]];
+        postAttach.add(keys[x],attrs[keys[x]]);
       }
     }
 
     frag.appendChild(createTemplateNodes(template,name,'component'));
 
+    if(loop !== undefined)
+    {
+      if(loop.listener.__kblooped === undefined) Object.defineProperty(loop.listener,'__kblooped',{
+        value:{},
+        writable:false,
+        enumerable:false,
+        configurable:true
+      });
+
+      if(loop.listener.__kblooped[loop.placement] !== undefined)
+      {
+        postAttach.add(loop.key,loop.listener.__kblooped[loop.placement]);
+      }
+      else
+      {
+        postAttach.add(loop.key,instance.viewmodels.observableObject());
+        postAttach[loop.key].add('key',loop.placement);
+        postAttach[loop.key].add('value',loop.listener[loop.placement]);
+        postAttach[loop.key].add('listener',loop.listener);
+
+        loop.listener.__kblooped[loop.placement] = postAttach[loop.key];
+
+        postAttach[loop.key].addDataUpdateListener('*',function(e){
+          if(JSON.stringify(e.localScope.listener[e.localScope.key]) !== JSON.stringify(e.value))
+          {
+            e.localScope.listener[e.localScope.key] = e.value;
+          }
+        });
+        if(!loop.listener.__kbattached)
+        {
+          loop.listener.__kbattached = true;
+          loop.listener.addDataUpdateListener('*',function(e){
+            if(JSON.stringify(loop.listener.__kblooped[e.key].value) !== JSON.stringify(e.value))
+            {
+              loop.listener.__kblooped[e.key].value = e.value;
+            }
+          })
+          .addDataCreateListener(function(e){
+            if(loop.parent.children[e.key] === undefined)
+            {
+              loop.parent.appendChild(instance.create(loop.component,'',{},{key:loop.key,listener:loop.listener,placement:e.key,parent:loop.parent,component:loop.component}));
+            }
+            else
+            {
+              loop.parent.insertBefore(instance.create(loop.component,'',{},{key:loop.key,listener:loop.listener,placement:e.key,parent:loop.parent,component:loop.component}),loop.parent.children[e.key]);
+            }
+          })
+          .addDataDeleteListener(function(e){
+            loop.parent.removeChild(loop.parent.children[e.localScope.length]);
+          })
+        }
+      }
+    }
+
     var viewmodel = instance.viewmodels.createViewModel(name,[name,frag.firstChild],preAttach,postAttach);
 
+    /*
     if(loop !== undefined)
     {
       var keys = Object.keys(attrs);
@@ -255,9 +301,10 @@ define(['./bind_viewmodel','./template','./map','./bind_dom'],function(bind_view
               loop.parent.children[e.key].__kbViewModel.index = e.value;
             }
           }
-        })
+        });
       }
     }
+    */
 
     return setInstance(template,viewmodel,name,'component',frag);
   }

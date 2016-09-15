@@ -53,9 +53,10 @@
             },
             listtemplate = '<div class="list">{{for items loop listitem}}</div>',
             listViewModel = function(){
-              this.items = [{name:'peter',type:'cool'},{name:'scott',type:'mean'},{name:'alfred',type:'wierd'},{name:'john',type:'cool'}];
+              this.people = [{name:'peter',type:'cool'},{name:'scott',type:'mean'},{name:'alfred',type:'wierd'},{name:'john',type:'cool'}];
+              this.items = ["orange","apple","banana"];
             },
-            listitemTemplate = '<div>{{name}} is <span>{{type}}</span></div>',
+            listitemTemplate = '<div>{{items.key}} is <span>{{items.value}}</span></div>',
             listitemViewModel = function(){
               this.index = "";
             }

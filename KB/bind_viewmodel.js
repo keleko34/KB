@@ -66,6 +66,15 @@ define([],function(){
           }
         }
 
+        if(e._stopPropogation === undefined && local.__kbparentlisteners[_all] !== undefined)
+        {
+          loop:for(var x=0,len=local.__kbparentlisteners[_all].length;x<len;x++)
+          {
+            local.__kbparentlisteners[_all][x](e);
+            if(e._stopPropogation) break loop;
+          }
+        }
+
         if(e._stopPropogation === undefined && local.__kbparentlisteners[key] !== undefined)
         {
           loop:for(var x=0,len=local.__kbparentlisteners[key].length;x<len;x++)
@@ -132,6 +141,15 @@ define([],function(){
           loop:for(var x=0,len=local.__kbupdatelisteners[key].length;x<len;x++)
           {
             local.__kbupdatelisteners[key][x](e);
+            if(e._stopPropogation) break loop;
+          }
+        }
+
+        if(e._stopPropogation === undefined && local.__kbparentupdatelisteners[_all] !== undefined)
+        {
+          loop:for(var x=0,len=local.__kbparentupdatelisteners[_all].length;x<len;x++)
+          {
+            local.__kbparentupdatelisteners[_all][x](e);
             if(e._stopPropogation) break loop;
           }
         }
@@ -212,7 +230,7 @@ define([],function(){
     }
     else
     {
-      return (scope.length !== 0 ? "."+ prop : prop);
+      return (scope.length !== 0 ? scope+"."+ prop : prop);
     }
   }
 
@@ -276,15 +294,12 @@ define([],function(){
     this.key = key;
   }
 
-  function setNormal(val,key,set,update,name,obj,scopeString)
+  function setNormal(val,key,set,update)
   {
     var _val = val,
         _key = key,
         _set = set,
         _update = update,
-        _name = name,
-        _obj = obj,
-        _scopeString = scopeString,
         _oldValue;
     return {
       get:function(){return _val;},
@@ -305,16 +320,15 @@ define([],function(){
             return;
           }
         }
-       if(_set(this,_key,v,_oldValue,_name,_obj,getScopeString(this,_key)))
+       if(_set(this,_key,v,_oldValue,this.__kbname,this.__kbref,getScopeString(this,_key)))
        {
          _val = v;
          if(isObject(v) || isArray(v))
          {
-           model.createObservable(_name,this,_key);
+           model.createObservable(this.__kbname,this,_key);
          }
        }
-       _update(this,_key,v,_oldValue,_name,_obj,getScopeString(this,_key));
-
+       _update(this,_key,v,_oldValue,this.__kbname,this.__kbref,getScopeString(this,_key));
       },
       enumerable:true,
       configurable:true
@@ -327,7 +341,14 @@ define([],function(){
     if(isObject(obj[prop]))
     {
       var keys = Object.keys(obj[prop]);
-      val = model.observableObject();
+      if(!isObservable(obj,prop))
+      {
+        val = model.observableObject();
+      }
+      else
+      {
+        val = obj[prop];
+      }
 
       Object.defineProperties(val,{
         __kbname:{
@@ -354,11 +375,18 @@ define([],function(){
       {
         loopCreateObservable(obj[prop],keys[x],val);
       }
-      Object.defineProperty((set || obj),prop,setNormal(val,prop,_set,_update,(set.__kbname || obj.__kbname),(set.__kbref || obj.__kbref),(set.__kbscopeString || obj.__kbscopeString)));
+      if(!isObservable(obj,prop)) Object.defineProperty((set || obj),prop,setNormal(val,prop,_set,_update,(set.__kbname || obj.__kbname),(set.__kbref || obj.__kbref),(set.__kbscopeString || obj.__kbscopeString)));
     }
     else if(isArray(obj[prop]))
     {
-      val = model.observableArray();
+      if(!isObservable(obj,prop))
+      {
+        val = model.observableArray();
+      }
+      else
+      {
+        val = obj[prop];
+      }
 
       Object.defineProperties(val,{
         __kbname:{
@@ -385,12 +413,12 @@ define([],function(){
       {
         loopCreateObservable(obj[prop],x,val);
       }
-      Object.defineProperty((set || obj),prop,setNormal(val,prop,_set,_update,(set.__kbname || obj.__kbname),(set.__kbref || obj.__kbref),(set.__kbscopeString || obj.__kbscopeString)));
+      if(!isObservable(obj,prop)) Object.defineProperty((set || obj),prop,setNormal(val,prop,_set,_update,(set.__kbname || obj.__kbname),(set.__kbref || obj.__kbref),(set.__kbscopeString || obj.__kbscopeString)));
     }
     else
     {
       val = obj[prop];
-      Object.defineProperty((set || obj),prop,setNormal(val,prop,_set,_update,(set.__kbname || obj.__kbname),(set.__kbref || obj.__kbref),(set.__kbscopeString || obj.__kbscopeString)));
+      if(!isObservable(obj,prop)) Object.defineProperty((set || obj),prop,setNormal(val,prop,_set,_update,(set.__kbname || obj.__kbname),(set.__kbref || obj.__kbref),(set.__kbscopeString || obj.__kbscopeString)));
     }
     return (set || obj);
   }
@@ -423,6 +451,30 @@ define([],function(){
       }
     }
 
+    function setLocals(arr,obj)
+    {
+      Object.defineProperties(write,{
+        __kbname:{
+          value:read.__kbname,
+          writable:false,
+          enumerable:false,
+          configurable:true
+        },
+        __kbref:{
+          value:read.__kbref,
+          writable:false,
+          enumerable:false,
+          configurable:true
+        },
+        __kbscopeString:{
+          value:getScopeString(read.__kbscopeString,prop),
+          writable:false,
+          enumerable:false,
+          configurable:true
+        }
+      });
+    }
+
     /* replace all mutator methods to listen for changes */
     Object.defineProperties(arr,{
       splice:{
@@ -432,10 +484,6 @@ define([],function(){
           {
             for(var x=index,len=(index+remove);x<len;x++)
             {
-              if(!_removed(this,x,this[x],undefined,this.__kbname,this.__kbref,this.__kbscopeString))
-              {
-                return 0;
-              }
               ret.push(this[x]);
             }
             for(var x=index,len=(this.length-remove);x<len;x++)
@@ -464,6 +512,13 @@ define([],function(){
                 this[x] = this[(x-1)];
               }
               this[index] = insert;
+            }
+          }
+          for(var x=0,len=ret.length;x<len;x++)
+          {
+            if(!_removed(this,(index+x),ret[x],undefined,this.__kbname,this.__kbref,this.__kbscopeString))
+            {
+              this.slice(index,0,ret[x]);
             }
           }
           updateCheck(this);
@@ -495,15 +550,16 @@ define([],function(){
       },
       shift:{
         value:function(){
-          var ret = undefined;
-          if(_removed(this,0,this[0],undefined,this.__kbname,this.__kbref,this.__kbscopeString))
+          var ret = this[0];
+          for(var x=0,len=(this.length-1);x<len;x++)
           {
-            ret = this[0];
-            for(var x=0,len=(this.length-1);x<len;x++)
-            {
-              this[x] = this[(x+1)];
-            }
-            this.length = (this.length-1);
+            this[x] = this[(x+1)];
+          }
+          this.length = (this.length-1);
+
+          if(!_removed(this,0,ret,undefined,this.__kbname,this.__kbref,this.__kbscopeString))
+          {
+            this.unshift(ret);
           }
           return ret;
         },
@@ -553,6 +609,15 @@ define([],function(){
       },
       add:{
         value:function(val){
+          if((isObject(val) || isArray(val)) && this.__kbname !== undefined)
+          {
+            setLocals(this,val,prop);
+          }
+          else if((isObject(val) || isArray(val)))
+          {
+            setLocals({__kbname:"",__kbref:this,__kbscopeString:""},val,prop);
+          }
+
           Object.defineProperty(arr,(arr.length-1),setNormal(val,(arr.length),_set,_update,arr.__kbname,arr.__kbref,arr.__kbscopeString));
           if(!_added(arr,(arr.length-1),val,undefined,arr.__kbname,arr.__kbref,arr.__kbscopeString))
           {
@@ -723,22 +788,55 @@ define([],function(){
   {
     var obj = {};
 
+    function setLocals(read,write,prop)
+    {
+      Object.defineProperties(write,{
+        __kbname:{
+          value:read.__kbname,
+          writable:false,
+          enumerable:false,
+          configurable:true
+        },
+        __kbref:{
+          value:read.__kbref,
+          writable:false,
+          enumerable:false,
+          configurable:true
+        },
+        __kbscopeString:{
+          value:getScopeString(read.__kbscopeString,prop),
+          writable:false,
+          enumerable:false,
+          configurable:true
+        }
+      });
+    }
+
     Object.defineProperties(obj,{
       add:{
         value:function(prop,val){
-          if(obj[prop] === undefined)
+          if(this[prop] === undefined)
           {
-            Object.defineProperty(obj,prop,setNormal(val,prop,_set,_update,obj.__kbname,obj.__kbref,obj.__kbscopeString));
-            if(!_added(obj,prop,val,undefined,obj.__kbname,obj.__kbref,obj.__kbscopeString))
+            if((isObject(val) || isArray(val)) && this.__kbname !== undefined)
             {
-              obj.remove(prop);
+              setLocals(this,val,prop);
+            }
+            else if((isObject(val) || isArray(val)))
+            {
+              setLocals({__kbname:"",__kbref:this,__kbscopeString:""},val,prop);
+            }
+
+            Object.defineProperty(this,prop,setNormal(val,prop,_set,_update,this.__kbname,this.__kbref,this.__kbscopeString));
+            if(!_added(this,prop,val,undefined,this.__kbname,this.__kbref,this.__kbscopeString))
+            {
+              this.remove(prop);
             }
           }
           else
           {
-            console.error("A property of ",prop," is already located on this object: ",obj);
+            console.error("A property of ",prop," is already located on this object: ",this);
           }
-          return obj;
+          return this;
         },
         writable:false,
         enumerable:false,
@@ -746,15 +844,15 @@ define([],function(){
       },
       remove:{
         value:function(prop){
-          if(obj[prop] !== undefined)
+          if(this[prop] !== undefined)
           {
-            if(_removed(obj,prop,val,undefined,obj.__kbname,obj.__kbref,obj.__kbscopeString))
+            if(_removed(this,prop,this[prop],undefined,this.__kbname,this.__kbref,this.__kbscopeString))
             {
-              obj[prop] = undefined;
-              delete obj[prop];
+              this[prop] = undefined;
+              delete this[prop];
             }
           }
-          return obj;
+          return this;
         },
         writable:false,
         enumerable:false,
@@ -1025,53 +1123,59 @@ define([],function(){
   {
     if(model.isRegistered(name))
     {
-      var _vm = Object.create(_viewmodels[name].prototype);
+      var obsv = model.observableObject();
+          obsv.__proto__ = _viewmodels[name].prototype;
+
+            Object.defineProperties(obsv,{
+              __kbname:{
+                value:name,
+                writable:false,
+                enumerable:false,
+                configurable:true
+              },
+              __kbref:{
+                value:obsv,
+                writable:false,
+                enumerable:false,
+                configurable:true
+              },
+              __kbscopeString:{
+                value:"",
+                writable:false,
+                enumerable:false,
+                configurable:true
+              }
+            });
+
           if(preextensions !== undefined && isObject(preextensions))
           {
             var exts = Object.keys(preextensions);
             for(var x=0,len=exts.length;x<len;x++)
             {
-              _vm[exts[x]] = preextensions[exts[x]];
+              obsv.add(exts[x],preextensions[exts[x]]);
             }
           }
-          _viewmodels[name].apply(_vm,params);
+          _viewmodels[name].apply(obsv,params);
           if(postextensions !== undefined && isObject(postextensions))
           {
             var exts = Object.keys(postextensions);
             for(var x=0,len=exts.length;x<len;x++)
             {
-              _vm[exts[x]] = postextensions[exts[x]];
+              if(obsv[exts[x]] !== undefined) obsv.remove(exts[x]);
+              obsv.add(exts[x],postextensions[exts[x]]);
             }
           }
-          var vmKeys = Object.keys(_vm),
-          obsv = model.observableObject();
-      obsv.__proto__ = _vm.__proto__;
-
-      Object.defineProperties(obsv,{
-          __kbname:{
-            value:name,
-            writable:false,
-            enumerable:false,
-            configurable:true
-          },
-          __kbref:{
-            value:obsv,
-            writable:false,
-            enumerable:false,
-            configurable:true
-          },
-          __kbscopeString:{
-            value:"",
-            writable:false,
-            enumerable:false,
-            configurable:true
-          }
-        });
-
+      var vmKeys = Object.keys(obsv);
       for(var x=0,len=vmKeys.length;x<len;x++)
       {
-        obsv[vmKeys[x]] = _vm[vmKeys[x]];
-        if(!isObservable(obsv[vmKeys[x]])) model.createObservable(name,obsv,vmKeys[x]);
+        if(!isObservable(obsv,vmKeys[x]))
+        {
+          model.createObservable(name,obsv,vmKeys[x]);
+        }
+        else if((isObject(obsv[vmKeys[x]]) || isArray(obsv[vmKeys[x]])) && obsv[vmKeys[x]].__kbname !== obsv.__kbname)
+        {
+          loopCreateObservable(obsv,vmKeys[x],obsv);
+        }
       }
       Object.defineProperty(obsv,'constructor',{
         value:_viewmodels[name],
@@ -1167,13 +1271,13 @@ define([],function(){
   model.addDataListener = function(scopeString,func,children)
   {
     addListener.call(this,scopeString,func,false,children);
-    return model;
+    return this;
   }
 
   model.addDataUpdateListener = function(scopeString,func,children)
   {
     addListener.call(this,scopeString,func,true,children);
-    return model;
+    return this;
   }
 
   function dataCreate(func,remove)
@@ -1329,13 +1433,13 @@ define([],function(){
   model.removeDataListener = function(scopeString,func,children)
   {
     removeListener.call(this,scopeString,func,false,children);
-    return model;
+    return this;
   }
 
   model.removeDataUpdateListener = function(scopeString,func,children)
   {
     removeListener.call(this,scopeString,func,true,children);
-    return model;
+    return this;
   }
 
   model.fireEvent = function(obj,prop,type)
