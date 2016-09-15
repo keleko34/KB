@@ -15,38 +15,69 @@
 
 
 
-        var coolTemplate = '<div class="{{classname | class}}"><input value="{{coolio}}" /></div>',
+        var coolTemplate = '<div class="{{className | class}}">{{innerHTML}}<br /><input type="checkbox" value="{{coolio | bool}}" /></div>',
             coolViewModel = function()
             {
-              this.classname = "cool-bar";
+              this.className = "cool-bar";
               this.filters.class = (function(){
                 var d = "cool";
                 return function(v){
                   return d+(v.length !== 0 ? ' ' : '')+v;
                 }
               }());
-              this.coolio = "yay";
+              this.coolio = "false";
+              this.filters.bool = function(v)
+              {
+                return (typeof v !== 'boolean' ? (v === "false" ? false : !!v) : v);
+              }
             },
-            somethingTemplate = '<div class="{{classname | class}}"><h1>Title</h1><p>- {{html}}</p><cool coolio="something"></cool></div>',
+            somethingTemplate = '<div class="{{className | class}}"><h1>Title</h1><p>- {{innerHTML}}</p><cool coolio="false"><somethingnew></somethingnew></cool></div>',
             somethingViewModel = function(){
-              this.classname = "something-bar";
+              this.className = "something-bar";
               this.filters.class = (function(){
                 var d = "something";
                 return function(v){
                   return d+(v.length !== 0 ? ' ' : '')+v;
                 }
               }());
+            },
+            anotherTemplate = '<div class="{{className | class}}">Something new</div>',
+            anotherViewModel = function(){
+              this.className = "somethingnew-cool";
+              this.filters.class = (function(){
+                var d = "somethingnew";
+                return function(v){
+                  return d+(v.length !== 0 ? ' ' : '')+v;
+                }
+              }());
+            },
+            listtemplate = '<div class="list">{{for items loop listitem}}</div>',
+            listViewModel = function(){
+              this.items = [{name:'peter',type:'cool'},{name:'scott',type:'mean'},{name:'alfred',type:'wierd'},{name:'john',type:'cool'}];
+            },
+            listitemTemplate = '<div>{{name}} is <span>{{type}}</span></div>',
+            listitemViewModel = function(){
+              this.index = "";
             }
+
 
 
         kb.instance.add('cool',coolViewModel,coolTemplate);
         kb.instance.add('something',somethingViewModel,somethingTemplate);
+        kb.instance.add('somethingnew',anotherViewModel,anotherTemplate);
 
-        var t = kb.instance.create('cool','',{coolio:"coolest"});
+        kb.instance.add('list',listViewModel,listtemplate);
+        kb.instance.add('listitem',listitemViewModel,listitemTemplate);
+
+        var t = kb.instance.create('cool','',{coolio:"false"});
         document.body.appendChild(t);
 
         var t = kb.instance.create('something','Some inner Text');
         document.body.appendChild(t);
+
+        var q = kb.instance.create('list');
+        document.body.appendChild(q);
+
       })
     </script>
   </body>

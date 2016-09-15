@@ -354,8 +354,8 @@ define([],function(){
           listenerObj = children[x].attrListeners();
           if(isInput || (attr === _all))
           {
-            if(children[x].addInputBinding !== undefined) children[x].addInputBinding();
-            if(children[x].addInputBoxBinding !== undefined) children[x].addInputBoxBinding();
+            if(children[x].addInputBinding !== undefined && !children[x].attrListeners()._onkeydown) children[x].addInputBinding();
+            if(children[x].addInputBoxBinding !== undefined && !children[x].attrListeners()._onmousedown) children[x].addInputBoxBinding();
           }
           if(isStyle)
           {
@@ -397,8 +397,8 @@ define([],function(){
         {
           if(isInput || (attr === _all))
           {
-            if(this.addInputBinding !== undefined) this.addInputBinding();
-            if(this.addInputBoxBinding !== undefined) this.addInputBoxBinding();
+            if(this.addInputBinding !== undefined && !this.attrListeners()._onkeydown) this.addInputBinding();
+            if(this.addInputBoxBinding !== undefined && !this.attrListeners()._onmousedown) this.addInputBoxBinding();
           }
           if(attr === _all)
           {
@@ -425,8 +425,8 @@ define([],function(){
             len = inputs.length;
         for(var x=0;x<len;x++)
         {
-          if(inputs[x].addInputBinding !== undefined) inputs[x].addInputBinding();
-          if(inputs[x].addInputBoxBinding !== undefined) inputs[x].addInputBoxBinding();
+          if(inputs[x].addInputBinding !== undefined && !inputs[x].attrListeners()._onkeydown) inputs[x].addInputBinding();
+          if(inputs[x].addInputBoxBinding !== undefined && !inputs[x].attrListeners()._onmousedown) inputs[x].addInputBoxBinding();
         }
       }
       if(isStyle)
@@ -745,8 +745,8 @@ define([],function(){
           len = nodes.length;
           for(var x=0;x<len;x++)
           {
-            if(nodes[x].addInputBinding !== undefined) nodes[x].addInputBinding();
-            if(nodes[x].addInputBoxBinding !== undefined) nodes[x].addInputBoxBinding();
+            if(nodes[x].addInputBinding !== undefined && !nodes[x].attrListeners()._onkeydown) nodes[x].addInputBinding();
+            if(nodes[x].addInputBoxBinding !== undefined && !nodes[x].attrListeners()._onmousedown) nodes[x].addInputBoxBinding();
           }
         }
 
@@ -833,7 +833,7 @@ define([],function(){
 
   bind.injectPrototypeProperty = function(obj,key,injectName,set,update)
   {
-    var _proto = obj.prototype,
+    var _proto = (obj.prototype !== undefined ? obj.prototype : obj),
         _descriptor = Object.getOwnPropertyDescriptor(_proto,key),
         _injectName = (injectName || obj.toString().split(/\s+/)[1].split('{')[0].replace('()','')),
         _injectedObj =  _injected[_injectName],
@@ -1020,6 +1020,11 @@ define([],function(){
 
       }
 
+      function checked(e)
+      {
+        if(e.target.checked.toString() !== e.value) e.target.checked = (e.value === "true" ? true : false);
+      }
+
       _proto.removeInputBinding = function(){
         this.attrListeners()._onkeydown = undefined;
         this.removeEventListener('keydown',keyDown);
@@ -1033,11 +1038,13 @@ define([],function(){
       _proto.removeInputBoxBinding = function(){
         this.attrListeners()._onmousedown = undefined;
         this.removeEventListener('mouseup',keyDown);
+        this.removeAttrListener('value',checked);
       }
 
       _proto.addInputBoxBinding = function(){
         this.attrListeners()._onmousedown = true;
         this.addEventListener('mouseup',keyDown);
+        this.addAttrListener('value',checked);
       }
     }
     return bind;
@@ -1070,6 +1077,19 @@ define([],function(){
   bind.injectedPrototypes = function()
   {
     return _injected;
+  }
+
+  bind.fireEvent = function(element,attr,type)
+  {
+    if(type === 'set')
+    {
+      _set(element,attr,element[attr]);
+    }
+    else if(type === 'update')
+    {
+      _update(element,attr,element[attr]);
+    }
+    return bind;
   }
 
   return bind;

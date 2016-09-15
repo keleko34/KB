@@ -1,3 +1,11 @@
+/*
+
+{{for object.yay loop item}}
+
+style="height:{{height | px}};width:{{width | px}}"
+
+*/
+
 define([],function(){
 
   var _start = "{{",
@@ -74,8 +82,8 @@ define([],function(){
     var reg = new RegExp('[\\'+_start+'\\s\\'+_end+']','g'),
         split = b.split(reg);
     return {
-      key:split[1],
-      bind:split[3]
+      key:split[3],
+      component:split[5]
     };
   }
 
@@ -100,18 +108,26 @@ define([],function(){
           if(childNodes[x].textContent.match(regTest))
           {
             split = splitMap(childNodes[x].textContent);
-            bind = {text:childNodes[x].textContent,texts:split,binds:{},filters:{},target:childNodes[x],prop:'textContent',element:childNodes[x],listener:"textContent"};
+            if(split.length === 1 && split[0].indexOf('for') !== -1)
+            {
+              bind = {text:childNodes[x].textContent,texts:split,binds:splitFor(childNodes[x].textContent),filters:{},target:childNodes[x],prop:'for',element:childNodes[x],listener:"textContent"};
+              binds.push(bind);
+            }
+            else
+            {
+              bind = {text:childNodes[x].textContent,texts:split,binds:{},filters:{},target:childNodes[x],prop:'textContent',element:childNodes[x],listener:"textContent"};
 
-            bind.binds = split.reduce(function(O,k){
-              if(k.match(regTest))
-              {
-                var name = k.replace(regStrip,'$1').replace(regreplace,'');
-                O[name] = {text:k,value:"",filters:splitFilter(k),set:set.bind({name:name,binder:bind})};
-              }
-              return O;
-            },{});
+              bind.binds = split.reduce(function(O,k){
+                if(k.match(regTest))
+                {
+                  var name = k.replace(regStrip,'$1').replace(regreplace,'');
+                  O[name] = {text:k,value:"",filters:splitFilter(k),set:set.bind({name:name,binder:bind})};
+                }
+                return O;
+              },{});
 
-            binds.push(bind);
+              binds.push(bind);
+            }
           }
         }
         else
@@ -121,27 +137,19 @@ define([],function(){
             attrs = childNodes[x].attributes;
             for(var i=0,lenn=attrs.length;i<lenn;i++)
             {
-              if(attrs[x].value.match(regTest))
+              if(attrs[i].value.match(regTest))
               {
-                if(attrs[x].name === 'data-bind')
-                {
-                  split = splitFor(attrs[x].value);
-                  binds.push({text:attrs[x].value,texts:split,target:attrs[x],prop:'for',element:childNodes[x]});
-                }
-                else
-                {
-                  split = splitMap(attrs[x].value);
-                  bind = {text:attrs[x].value,texts:split,binds:{},target:attrs[x],prop:'value',element:childNodes[x],listener:attrs[x].name};
-                  bind.binds = split.reduce(function(O,k){
-                    if(k.match(regTest))
-                    {
-                      var name = k.replace(regStrip,'$1').replace(regreplace,'');
-                      O[name] = {text:k,value:"",filters:splitFilter(k),set:set.bind({name:name,binder:bind})};
-                    }
-                    return O;
-                  },{});
-                  binds.push(bind);
-                }
+                split = splitMap(attrs[i].value);
+                bind = {text:attrs[i].value,texts:split,binds:{},target:attrs[i],prop:'value',element:childNodes[x],listener:attrs[i].name};
+                bind.binds = split.reduce(function(O,k){
+                  if(k.match(regTest))
+                  {
+                    var name = k.replace(regStrip,'$1').replace(regreplace,'');
+                    O[name] = {text:k,value:"",filters:splitFilter(k),set:set.bind({name:name,binder:bind})};
+                  }
+                  return O;
+                },{});
+                binds.push(bind);
               }
             }
             if(childNodes[x].childNodes.length !== 0) binds = binds.concat(loopCheck(childNodes[x].childNodes));
