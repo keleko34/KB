@@ -618,7 +618,7 @@ define([],function(){
             setLocals({__kbname:"",__kbref:this,__kbscopeString:""},val,prop);
           }
 
-          Object.defineProperty(arr,(arr.length-1),setNormal(val,(arr.length),_set,_update,arr.__kbname,arr.__kbref,arr.__kbscopeString));
+          Object.defineProperty(arr,arr.length,setNormal(val,(arr.length),_set,_update,arr.__kbname,arr.__kbref,arr.__kbscopeString));
           if(!_added(arr,(arr.length-1),val,undefined,arr.__kbname,arr.__kbref,arr.__kbscopeString))
           {
             arr.remove((arr.length-1));
