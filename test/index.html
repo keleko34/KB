@@ -61,8 +61,6 @@
               this.index = "";
             }
 
-
-
         kb.instance.add('cool',coolViewModel,coolTemplate);
         kb.instance.add('something',somethingViewModel,somethingTemplate);
         kb.instance.add('somethingnew',anotherViewModel,anotherTemplate);
@@ -70,13 +68,13 @@
         kb.instance.add('list',listViewModel,listtemplate);
         kb.instance.add('listitem',listitemViewModel,listitemTemplate);
 
-        var t = kb.instance.create('cool','',{coolio:"false"});
+        var t = kb.create('cool','',{coolio:"false"});
         document.body.appendChild(t);
 
-        var t = kb.instance.create('something','Some inner Text');
+        var t = kb.create('something','Some inner Text');
         document.body.appendChild(t);
 
-        var q = kb.instance.create('list');
+        var q = kb.create('list');
         document.body.appendChild(q);
 
       })

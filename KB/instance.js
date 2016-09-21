@@ -243,69 +243,6 @@ define(['./bind_viewmodel','./template','./map','./bind_dom'],function(bind_view
 
     var viewmodel = instance.viewmodels.createViewModel(name,[name,frag.firstChild],preAttach,postAttach);
 
-    /*
-    if(loop !== undefined)
-    {
-      var keys = Object.keys(attrs);
-
-      for(var x=0,len=keys.length;x<len;x++)
-      {
-        (function(key,viewmodel,listener,placement){
-          viewmodel.addDataListener(key,function(e){
-            if(e.key === 'index')
-            {
-              listener[placement] = e.value;
-            }
-            else
-            {
-              instance.viewmodels.setScope(listener[placement],key,e.value);
-            }
-          })
-        }(keys[x],viewmodel,loop.listener,loop.placement));
-      }
-      if(!loop.listener.__kbattached)
-      {
-        loop.listener.__kbattached = true;
-
-        loop.listener.addDataCreateListener(function(e){
-          var obj;
-          if(!instance.viewmodels.isObject(loop.listener[e.key]))
-          {
-            obj = {};
-            obj.index = loop.listener[e.key];
-          }
-          else
-          {
-            obj = loop.listener[e.key];
-          }
-
-          loop.parent.appendChild(instance.create(loop.component,'',obj,{listener:loop.listener,placement:e.key,parent:loop.parent,component:loop.component}));
-        })
-        .addDataDeleteListener(function(e){
-          loop.parent.removeChild(loop.parent.children[e.key]);
-        })
-        loop.listener.addDataUpdateListener('*',function(e){
-          console.log(e,loop.listener);
-          if(loop.listener[e.key] !== undefined)
-          {
-            if(instance.viewmodels.isObject(loop.listener[e.key]))
-            {
-              var keys = Object.keys(loop.listener[e.key]);
-              for(var x =0,len=keys.length;x<len;x++)
-              {
-                loop.parent.children[e.key].__kbViewModel[keys[x]] = loop.listener[e.key][keys[x]];
-              }
-            }
-            else
-            {
-              loop.parent.children[e.key].__kbViewModel.index = e.value;
-            }
-          }
-        });
-      }
-    }
-    */
-
     return setInstance(template,viewmodel,name,'component',frag);
   }
 

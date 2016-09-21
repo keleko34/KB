@@ -9,6 +9,22 @@ define(['./instance'],function(instance){
   }
 
   init.instance = instance();
+
+  init.viewmodels = init.instance.viewmodels;
+
+  init.dom = init.instance.dom;
+
+  init.templates = init.instance.templates;
+
+  init.maps = init.instance.maps;
+
+  init.create = init.instance.create;
+
+  init.addDataListener = init.viewmodels.addDataListener.bind(init.viewmodels);
+  init.addDataUpdateListener = init.viewmodels.addDataUpdateListener.bind(init.viewmodels);
+  init.addDataCreateListener = init.viewmodels.addDataCreateListener.bind(init.viewmodels);
+  init.addDataRemoveListener = init.viewmodels.addDataRemoveListener.bind(init.viewmodels);
+
   /*
   init.binder = bind_dom.call(bind_dom);
   init.addAttrListener = init.binder.addAttrListener.bind(init.binder);
