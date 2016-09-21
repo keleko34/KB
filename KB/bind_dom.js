@@ -30,12 +30,50 @@ define([],function(){
       {
         var e = new _changeEvent(el,prop,val,ret,args,undefined,'set');
 
-        if(_attrListeners[_all] !== undefined)
+        if(el.__kb !== undefined)
         {
-          loopListener(_attrListeners[_all],e);
-          if(e._stopPropogation === undefined)
+          var localAttrListeners = el.__kb._attrListeners,
+              localStyleListeners = el.__kb._styleListeners,
+              localParentAttrListeners = el.__kb._parentAttrListeners,
+              localParentStyleListeners = el.__kb._parentStyleListeners;
+
+          if(localAttrListeners[prop] !== undefined)
           {
-            loopListener(_styleListeners[_all],e);
+            loopListener(localAttrListeners[prop],e);
+          }
+
+          if(e._stopPropogation === undefined && localStyleListeners[prop] !== undefined)
+          {
+            loopListener(localStyleListeners[prop],e);
+          }
+
+          if(e._stopPropogation === undefined && localAttrListeners[_all] !== undefined)
+          {
+            loopListener(localAttrListeners[_all],e);
+            if(e._stopPropogation === undefined)
+            {
+              loopListener(localStyleListeners[_all],e);
+            }
+          }
+
+          if(e._stopPropogation === undefined && localParentAttrListeners[prop] !== undefined)
+          {
+            loopParentListener(localParentAttrListeners[prop],e);
+          }
+
+          if(e._stopPropogation === undefined && localParentStyleListeners[prop] !== undefined)
+          {
+            loopParentListener(localParentStyleListeners[prop],e);
+          }
+
+          if(e._stopPropogation === undefined && localParentAttrListeners[_all] !== undefined)
+          {
+            loopParentListener(localParentAttrListeners[_all],e);
+
+            if(e._stopPropogation === undefined)
+            {
+              loopParentListener(localParentStyleListeners[_all],e);
+            }
           }
         }
 
@@ -49,50 +87,12 @@ define([],function(){
           loopListener(_styleListeners[prop],e);
         }
 
-        if(el.__kb !== undefined)
+        if(e._stopPropogation === undefined && _attrListeners[_all] !== undefined)
         {
-          var localAttrListeners = el.__kb._attrListeners,
-              localStyleListeners = el.__kb._styleListeners,
-              localParentAttrListeners = el.__kb._parentAttrListeners,
-              localParentStyleListeners = el.__kb._parentStyleListeners;
-
-          if(e._stopPropogation === undefined && localAttrListeners[_all] !== undefined)
+          loopListener(_attrListeners[_all],e);
+          if(e._stopPropogation === undefined)
           {
-            loopListener(localAttrListeners[_all],e);
-            if(e._stopPropogation === undefined)
-            {
-              loopListener(localStyleListeners[_all],e);
-            }
-          }
-
-          if(e._stopPropogation === undefined && localAttrListeners[prop] !== undefined)
-          {
-            loopListener(localAttrListeners[prop],e);
-          }
-
-          if(e._stopPropogation === undefined && localStyleListeners[prop] !== undefined)
-          {
-            loopListener(localStyleListeners[prop],e);
-          }
-
-          if(e._stopPropogation === undefined && localParentAttrListeners[_all] !== undefined)
-          {
-            loopParentListener(localParentAttrListeners[_all],e);
-
-            if(e._stopPropogation === undefined)
-            {
-              loopParentListener(localParentStyleListeners[_all],e);
-            }
-          }
-
-          if(e._stopPropogation === undefined && localParentAttrListeners[prop] !== undefined)
-          {
-            loopParentListener(localParentAttrListeners[prop],e);
-          }
-
-          if(e._stopPropogation === undefined && localParentStyleListeners[prop] !== undefined)
-          {
-            loopParentListener(localParentStyleListeners[prop],e);
+            loopListener(_styleListeners[_all],e);
           }
         }
 
@@ -106,12 +106,50 @@ define([],function(){
       {
         var e = new _changeEvent(el,prop,val,ret,args,action,'update');
 
-        if(_attrUpdateListeners[_all] !== undefined)
+        if(el.__kb !== undefined)
         {
-          loopListener(_attrUpdateListeners[_all],e);
-          if(e._stopPropogation === undefined)
+          var localAttrListeners = el.__kb._attrUpdateListeners,
+              localStyleListeners = el.__kb._styleUpdateListeners,
+              localParentAttrListeners = el.__kb._parentAttrUpdateListeners,
+              localParentStyleListeners = el.__kb._parentStyleUpdateListeners;
+
+          if(localAttrListeners[prop] !== undefined)
           {
-            loopListener(_styleUpdateListeners[_all],e);
+            loopListener(localAttrListeners[prop],e);
+          }
+
+          if(e._stopPropogation === undefined && localStyleListeners[prop] !== undefined)
+          {
+            loopListener(localStyleListeners[prop],e);
+          }
+
+          if(e._stopPropogation === undefined && localAttrListeners[_all] !== undefined)
+          {
+            loopListener(localAttrListeners[_all],e);
+            if(e._stopPropogation === undefined)
+            {
+              loopListener(localStyleListeners[_all],e);
+            }
+          }
+
+          if(e._stopPropogation === undefined && localParentAttrListeners[prop] !== undefined)
+          {
+            loopParentListener(localParentAttrListeners[prop],e);
+          }
+
+          if(e._stopPropogation === undefined && localParentStyleListeners[prop] !== undefined)
+          {
+            loopParentListener(localParentStyleListeners[prop],e);
+          }
+
+          if(e._stopPropogation === undefined && localParentAttrListeners[_all] !== undefined)
+          {
+            loopParentListener(localParentAttrListeners[_all],e);
+
+            if(e._stopPropogation === undefined)
+            {
+              loopParentListener(localParentStyleListeners[_all],e);
+            }
           }
         }
 
@@ -125,50 +163,12 @@ define([],function(){
           loopListener(_styleUpdateListeners[prop],e);
         }
 
-        if(el.__kb !== undefined)
+        if(e._stopPropogation === undefined && _attrUpdateListeners[_all] !== undefined)
         {
-          var localAttrListeners = el.__kb._attrUpdateListeners,
-              localStyleListeners = el.__kb._styleUpdateListeners,
-              localParentAttrListeners = el.__kb._parentAttrUpdateListeners,
-              localParentStyleListeners = el.__kb._parentStyleUpdateListeners;
-
-          if(e._stopPropogation === undefined && localAttrListeners[_all] !== undefined)
+          loopListener(_attrUpdateListeners[_all],e);
+          if(e._stopPropogation === undefined)
           {
-            loopListener(localAttrListeners[_all],e);
-            if(e._stopPropogation === undefined)
-            {
-              loopListener(localStyleListeners[_all],e);
-            }
-          }
-
-          if(e._stopPropogation === undefined && localAttrListeners[prop] !== undefined)
-          {
-            loopListener(localAttrListeners[prop],e);
-          }
-
-          if(e._stopPropogation === undefined && localStyleListeners[prop] !== undefined)
-          {
-            loopListener(localStyleListeners[prop],e);
-          }
-
-          if(e._stopPropogation === undefined && localParentAttrListeners[_all] !== undefined)
-          {
-            loopParentListener(localParentAttrListeners[_all],e);
-
-            if(e._stopPropogation === undefined)
-            {
-              loopParentListener(localParentStyleListeners[_all],e);
-            }
-          }
-
-          if(e._stopPropogation === undefined && localParentAttrListeners[prop] !== undefined)
-          {
-            loopParentListener(localParentAttrListeners[prop],e);
-          }
-
-          if(e._stopPropogation === undefined && localParentStyleListeners[prop] !== undefined)
-          {
-            loopParentListener(localParentStyleListeners[prop],e);
+            loopListener(_styleUpdateListeners[_all],e);
           }
         }
 
