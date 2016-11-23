@@ -32,13 +32,7 @@
     "url": "https://github.com/keleko34/KB/issues"
   },
   "devDependencies": {
-    "gulp": "^3.9.0",
-    "gulp-closure-compiler": "^0.4.0",
-    "gulp-file": "^0.2.0",
-    "gulp-inject": "^3.0.0",
-    "gulp-prompt": "^0.1.2",
-    "gulp-replace": "^0.5.4",
-    "sort-stream": "^1.0.1"
+    "K_Tasks": "^0.4.7"
   },
   "scripts": {
     "build": "gulp build"
