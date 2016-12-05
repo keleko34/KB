@@ -19,7 +19,7 @@ define([],function(){
             /* The symbol to dignify what the master global listener is */
             _all = '*',
 
-            _texts = ['textContent','innerHTML','innerText','outerHTML','outerText'],
+            _texts = ['textContent','innerHTML','innerText','outerHTML','outerText','appendChild','removeChild','replaceChild','insertAdjacentHTML','insertBefore'],
 
             /* A master list of all style prop names */
             _allStyles = Object.getOwnPropertyNames(document.body.style),

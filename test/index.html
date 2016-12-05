@@ -68,6 +68,8 @@
         })
         .addChildAttrListener('html',function(e){
           if(e.child.id !== 'subchild1') console.log('appending',e.value,' to ',e.child);
+
+          if(e.attr !== 'innerHTML') console.log(e);
         })
 
         function myObject(){};
@@ -107,6 +109,12 @@
           subChild1.appendChild(document.createElement('input'));
           subChild1.children[(subChild1.children.length-1)].style.background = '#F00';
         }
+
+
+
+      subChild1.insertBefore(document.createElement('input'),subChild1.children[(subChild1.children.length-1)])
+      subChild1.insertAdjacentHTML('beforeend',document.createElement('input'))
+      subChild1.appendChild(document.createElement('input'))
     </script>
   </body>
 </html>
