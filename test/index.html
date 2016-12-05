@@ -41,8 +41,8 @@
         .addAttrListener('appendChild',function(e){
           //console.log(e);
         })
-        .addAttrListener('innerHTML',function(e){
-          //console.log(e); //fires when input value changes
+        .addAttrListener('html',function(e){
+          console.log("html change",e); //fires when input value changes
         })
         .addAttrListener('add',function(e){
           //console.log(e);
@@ -66,8 +66,8 @@
           //if(e.child.id !== 'subchild1') console.log("preventing",e.child);
           e.preventDefault();
         })
-        .addChildAttrListener('innerHTML',function(e){
-          //if(e.child.id !== 'subchild1') console.log('appending',e.value,' to ',e.child);
+        .addChildAttrListener('html',function(e){
+          if(e.child.id !== 'subchild1') console.log('appending',e.value,' to ',e.child);
         })
 
         function myObject(){};
