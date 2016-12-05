@@ -2,6 +2,10 @@
 
 ## 0.6.1 / 2016-11-23
 
+- [Update] add 'html' special attr listener to listen for all html changes
+
+## 0.6.1 / 2016-11-23
+
 - [Update] update build tool to use K_Tasks npm module
 
 ## 0.2.4 / 2016-05-12

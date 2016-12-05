@@ -19,6 +19,8 @@ define([],function(){
             /* The symbol to dignify what the master global listener is */
             _all = '*',
 
+            _texts = ['textContent','innerHTML','innerText','outerHTML','outerText'],
+
             /* A master list of all style prop names */
             _allStyles = Object.getOwnPropertyNames(document.body.style),
 
@@ -1039,25 +1041,65 @@ define([],function(){
 
         bind.addAttrListener = function(attr,func,child)
         {
-          addListener.call(this,attr,func,child,false);
+          if(attr === 'html')
+          {
+            for(var x=0,len=_texts.length;x<len;x++)
+            {
+              addListener.call(this,_texts[x],func,child,false);
+            }
+          }
+          else
+          {
+            addListener.call(this,attr,func,child,false);
+          }
           return bind;
         }
 
         bind.addAttrUpdateListener = function(attr,func,child)
         {
-          addListener.call(this,attr,func,child,true);
+          if(attr === 'html')
+          {
+            for(var x=0,len=_texts.length;x<len;x++)
+            {
+              addListener.call(this,_texts[x],func,child,true);
+            }
+          }
+          else
+          {
+            addListener.call(this,attr,func,child,true);
+          }
           return bind;
         }
 
         bind.removeAttrListener = function(attr,func,child)
         {
-          removeListener.call(this,attr,func,child,false);
+          if(attr === 'html')
+          {
+            for(var x=0,len=_texts.length;x<len;x++)
+            {
+              removeListener.call(this,_texts[x],func,child,false);
+            }
+          }
+          else
+          {
+            removeListener.call(this,attr,func,child,false);
+          }
           return bind;
         }
 
         bind.removeAttrUpdateListener = function(attr,func,child)
         {
-          removeListener.call(this,attr,func,child,true);
+          if(attr === 'html')
+          {
+            for(var x=0,len=_texts.length;x<len;x++)
+            {
+              removeListener.call(this,_texts[x],func,child,true);
+            }
+          }
+          else
+          {
+            removeListener.call(this,attr,func,child,true);
+          }
           return bind;
         }
 
