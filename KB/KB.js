@@ -29,9 +29,9 @@ define([],function(){
             i,
 
             /* Default set method for all listeners, loops through and runs all attached listeners */
-            _set = function(el,prop,val,ret,args)
+            _set = function(el,prop,val,ret,args,stopChange)
             {
-              var e = new _changeEvent(el,prop,val,ret,args,undefined,'set');
+              var e = new _changeEvent(el,prop,val,ret,args,undefined,'set',stopChange);
 
               if(el.__kb !== undefined)
               {
@@ -212,7 +212,7 @@ define([],function(){
         }
 
         /* The event object that gets passed to each listener */
-        function _changeEvent(el,attr,value,oldValue,args,action,type)
+        function _changeEvent(el,attr,value,oldValue,args,action,type,stopChange)
         {
           this.stopPropagation = function(){this._stopPropogation = true;};
           this.preventDefault = function(){this._preventDefault = true;};
@@ -224,6 +224,7 @@ define([],function(){
           this.action = action;
           this.child = undefined;
           this.type = type;
+          this.stopChange = stopChange;
         }
 
         /* This holds all listeners associated with a particular element */
@@ -250,14 +251,14 @@ define([],function(){
               _set = set,
               _update = update,
               _oldValue;
-          return function standardSet(v)
+          return function standardSet(v,stopChange)
           {
              _oldValue = _descGet.call(this);
-             if(_set(this,_key,v,_oldValue))
+             if(_set(this,_key,v,_oldValue,undefined,stopChange))
              {
                _descSet.call(this,v);
              }
-             _update(this,_key,v,_oldValue);
+             if(!stopChange) _update(this,_key,v,_oldValue);
           }
         }
 
@@ -269,14 +270,14 @@ define([],function(){
               _set = set,
               _update = update,
               _oldValue;
-          return function valueSet(v)
+          return function valueSet(v,stopChange)
           {
             _oldValue = _descriptor.value;
-            if(_set(this,_key,v,_oldValue,arguments))
+            if(_set(this,_key,v,_oldValue,arguments,stopChange))
             {
               _descriptor.value = v;
             }
-            _update(this,_key,v,_oldValue,arguments);
+            if(!stopChange) _update(this,_key,v,_oldValue,arguments);
           }
         }
 
@@ -314,15 +315,15 @@ define([],function(){
               _value;
           return {
             get:function(){return _value;},
-            set:function styleSet(v)
+            set:function styleSet(v,stopChange)
             {
               _oldValue = _value;
-              if(_set(_el,_key,v,_oldValue))
+              if(_set(_el,_key,v,_oldValue,undefined,stopChange))
               {
                 _value = v;
                 _proto.setProperty(_keyCP,v);
               }
-              _update(_el,_key,v,_oldValue);
+              if(!stopChange) _update(_el,_key,v,_oldValue);
             },
             enumerable:true,
             configurable:true
