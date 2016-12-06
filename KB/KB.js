@@ -211,6 +211,20 @@ define([],function(){
           }
         }
 
+        /* Helper method to loop through all listeners and return if a method exists */
+        function loopListenerCheck(looper,func)
+        {
+          var _looper = looper,
+              _len = looper.length,
+              _func = func,
+              _x;
+          for(_x=0l_x<_len;x++)
+          {
+            if(_looper[x].toString() === _func.toString()) return true;
+          }
+          return false;
+        }
+
         /* The event object that gets passed to each listener */
         function _changeEvent(el,attr,value,oldValue,args,action,type,stopChange)
         {
@@ -602,6 +616,54 @@ define([],function(){
         {
           bind.removeAttrUpdateListener.call(this,attr,func,true);
           return this;
+        }
+
+        /* This method checks if a listener of this function already exists on a desired attribute */
+        function hasListener(listener,attr,func)
+        {
+          var _listeners = this.attrListeners();
+
+          if(attr === 'html') attr = 'innerHTML';
+          switch(listener)
+          {
+            case 'attr':
+              if(typeof _listeners._attrListeners[attr] !== undefined)
+              {
+                if(loopListenerCheck(_listeners._attrListeners[attr],func)) return true;
+              }
+              else if(typeof _listeners._styleListeners[attr] !== undefined)
+              {
+                if(loopListenerCheck(_listeners._styleListeners[attr],func)) return true;
+              }
+              else if(typeof _listeners._parentAttrListeners[attr] !== undefined)
+              {
+                if(loopListenerCheck(_listeners._parentAttrListeners[attr],func)) return true;
+              }
+              else if(typeof _listeners._parentStyleListeners[attr] !== undefined)
+              {
+                if(loopListenerCheck(_listeners._parentStyleListeners[attr],func)) return true;
+              }
+            break;
+            case 'attrupdate':
+              if(typeof _listeners._attrUpdateListeners[attr] !== undefined)
+              {
+                if(loopListenerCheck(_listeners._attrUpdateListeners[attr],func)) return true;
+              }
+              else if(typeof _listeners._styleUpdateListeners[attr] !== undefined)
+              {
+                if(loopListenerCheck(_listeners._styleUpdateListeners[attr],func)) return true;
+              }
+              else if(typeof _listeners._parentAttrUpdateListeners[attr] !== undefined)
+              {
+                if(loopListenerCheck(_listeners._parentAttrUpdateListeners[attr],func)) return true;
+              }
+              else if(typeof _listeners._parentStyleUpdateListeners[attr] !== undefined)
+              {
+                if(loopListenerCheck(_listeners._parentStyleUpdateListeners[attr],func)) return true;
+              }
+            break;
+          }
+          return false;
         }
 
         /* This is the master constructor, to be ran only once. */
@@ -1102,6 +1164,35 @@ define([],function(){
             removeListener.call(this,attr,func,child,true);
           }
           return bind;
+        }
+
+        bind.hasListener = function(listener,attr,func)
+        {
+          if(attr === 'html') attr = 'innerHTML';
+          switch(listener)
+          {
+            case 'attr':
+              if(typeof _attrListeners[attr] !== undefined)
+              {
+                if(loopListenerCheck(_attrListeners[attr],func)) return true;
+              }
+              else if(typeof _styleListeners[attr] !== undefined)
+              {
+                if(loopListenerCheck(_styleListeners[attr],func)) return true;
+              }
+            break;
+            case 'attrupdate':
+              if(typeof _attrUpdateListeners[attr] !== undefined)
+              {
+                if(loopListenerCheck(_attrUpdateListeners[attr],func)) return true;
+              }
+              else if(typeof _styleUpdateListeners[attr] !== undefined)
+              {
+                if(loopListenerCheck(_styleUpdateListeners[attr],func)) return true;
+              }
+            break;
+          }
+          return false;
         }
 
         bind.injectedPrototypes = function()
