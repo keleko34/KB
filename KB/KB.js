@@ -218,7 +218,7 @@ define([],function(){
               _len = looper.length,
               _func = func,
               _x;
-          for(_x=0l_x<_len;x++)
+          for(_x=0;_x<_len;x++)
           {
             if(_looper[x].toString() === _func.toString()) return true;
           }
