@@ -1,12 +1,16 @@
 # History
 
+## 0.6.8 / 2016-12-06
+
+- [Update] added 'events' special attr listener to listen for all event changes including addEventListener and removeEventListener
+
 ## 0.6.6 / 2016-12-06
 
 - [Update] added ability to check if a listener method already exists for an attr or attrupdate
 
 ## 0.6.1 / 2016-11-23
 
-- [Update] add 'html' special attr listener to listen for all html changes
+- [Update] added 'html' special attr listener to listen for all html changes
 
 ## 0.6.1 / 2016-11-23
 

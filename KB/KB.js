@@ -24,6 +24,8 @@ define([],function(){
             /* A master list of all style prop names */
             _allStyles = Object.getOwnPropertyNames(document.body.style),
 
+            _allEvents = Object.keys(HTMLElement.prototype).filter(function(v){return (v.indexOf('on') === 0);}).concat(['addEventListener','removeEventListener']),
+
             /* global iterators */
             x,
             i,
@@ -624,6 +626,7 @@ define([],function(){
           var _listeners = this.attrListeners();
 
           if(attr === 'html') attr = 'innerHTML';
+          if(attr === 'events') attr = 'onclick';
           switch(listener)
           {
             case 'attr':
@@ -914,6 +917,7 @@ define([],function(){
             _proto.addAttrUpdateListener = bind.addAttrUpdateListener;
             _proto.addChildAttrListener = addChildAttrListener;
             _proto.addChildAttrUpdateListener = addChildAttrUpdateListener;
+            _proto.hasListener = hasListener;
 
             _proto.removeAttrListener = bind.removeAttrListener;
             _proto.removeAttrUpdateListener = bind.removeAttrUpdateListener;
@@ -1016,6 +1020,7 @@ define([],function(){
             _proto.addAttrUpdateListener = bind.addAttrUpdateListener;
             _proto.addChildAttrListener = addChildAttrListener;
             _proto.addChildAttrUpdateListener = addChildAttrUpdateListener;
+            _proto.hasListener = hasListener;
           }
 
           if(_injectedObj === undefined)
@@ -1111,6 +1116,13 @@ define([],function(){
               addListener.call(this,_texts[x],func,child,false);
             }
           }
+          else if(attr === 'events')
+          {
+            for(var x=0,len=_allEvents.length;x<len;x++)
+            {
+              addListener.call(this,_allEvents[x],func,child,false);
+            }
+          }
           else
           {
             addListener.call(this,attr,func,child,false);
@@ -1125,6 +1137,13 @@ define([],function(){
             for(var x=0,len=_texts.length;x<len;x++)
             {
               addListener.call(this,_texts[x],func,child,true);
+            }
+          }
+          else if(attr === 'events')
+          {
+            for(var x=0,len=_allEvents.length;x<len;x++)
+            {
+              addListener.call(this,_allEvents[x],func,child,true);
             }
           }
           else
@@ -1143,6 +1162,13 @@ define([],function(){
               removeListener.call(this,_texts[x],func,child,false);
             }
           }
+          else if(attr === 'events')
+          {
+            for(var x=0,len=_allEvents.length;x<len;x++)
+            {
+              removeListener.call(this,_allEvents[x],func,child,false);
+            }
+          }
           else
           {
             removeListener.call(this,attr,func,child,false);
@@ -1159,6 +1185,13 @@ define([],function(){
               removeListener.call(this,_texts[x],func,child,true);
             }
           }
+          else if(attr === 'events')
+          {
+            for(var x=0,len=_allEvents.length;x<len;x++)
+            {
+              removeListener.call(this,_allEvents[x],func,child,true);
+            }
+          }
           else
           {
             removeListener.call(this,attr,func,child,true);
@@ -1169,6 +1202,7 @@ define([],function(){
         bind.hasListener = function(listener,attr,func)
         {
           if(attr === 'html') attr = 'innerHTML';
+          if(attr === 'events') attr = 'onclick';
           switch(listener)
           {
             case 'attr':

@@ -114,7 +114,15 @@
 
       subChild1.insertBefore(document.createElement('input'),subChild1.children[(subChild1.children.length-1)])
       subChild1.insertAdjacentHTML('beforeend',document.createElement('input'))
-      subChild1.appendChild(document.createElement('input'))
+      subChild1.appendChild(document.createElement('input'));
+
+      k.addAttrListener('events',function(e){
+        console.log("Setting Event: ",e);
+      });
+
+      subChild1.onclick = function(e){};
+
+
     </script>
   </body>
 </html>
