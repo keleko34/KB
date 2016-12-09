@@ -312,7 +312,7 @@ define([],function(){
             {
               _action = _descVal.apply(this,arguments);
             }
-            _update(this,_key,null,null,arguments,_action);
+            if(!this._stopChange) _update(this,_key,null,null,arguments,_action);
             return _action;
           }
         }
