@@ -267,14 +267,18 @@ define([],function(){
               _set = set,
               _update = update,
               _oldValue;
-          return function standardSet(v,stopChange)
+          return function standardSet(v)
           {
              _oldValue = _descGet.call(this);
-             if(_set(this,_key,v,_oldValue,undefined,stopChange))
+             if(_set(this,_key,v,_oldValue,undefined,this._stopChange))
              {
                _descSet.call(this,v);
              }
-             if(!stopChange) _update(this,_key,v,_oldValue);
+             if(!this._stopChange)
+             {
+               _update(this,_key,v,_oldValue);
+             }
+             this._stopChange = undefined;
           }
         }
 
@@ -286,14 +290,18 @@ define([],function(){
               _set = set,
               _update = update,
               _oldValue;
-          return function valueSet(v,stopChange)
+          return function valueSet(v)
           {
             _oldValue = _descriptor.value;
-            if(_set(this,_key,v,_oldValue,arguments,stopChange))
+            if(_set(this,_key,v,_oldValue,arguments,this._stopChange))
             {
               _descriptor.value = v;
             }
-            if(!stopChange) _update(this,_key,v,_oldValue,arguments);
+            if(!this._stopChange)
+            {
+              _update(this,_key,v,_oldValue,arguments);
+            }
+            this._stopChange = undefined;
           }
         }
 
@@ -312,7 +320,11 @@ define([],function(){
             {
               _action = _descVal.apply(this,arguments);
             }
-            if(!this._stopChange) _update(this,_key,null,null,arguments,_action);
+            if(!this._stopChange)
+            {
+              _update(this,_key,null,null,arguments,_action);
+            }
+            this._stopChange = undefined;
             return _action;
           }
         }
@@ -669,6 +681,13 @@ define([],function(){
           return false;
         }
 
+        /* sets stopChange Property for stopping update listeners to fire */
+        function stopChange()
+        {
+          this._stopChange = true;
+          return this;
+        }
+
         /* This is the master constructor, to be ran only once. */
         function bind()
         {
@@ -923,6 +942,8 @@ define([],function(){
             _proto.removeAttrUpdateListener = bind.removeAttrUpdateListener;
             _proto.removeChildAttrListener = removeChildAttrListener;
             _proto.removeChildAttrUpdateListener = removeChildAttrUpdateListener;
+
+            _proto.stopChange = stopChange;
           }
 
           if(_injectedObj === undefined)
