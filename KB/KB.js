@@ -316,7 +316,7 @@ define([],function(){
               _action;
           return function functionSet()
           {
-            if(_set(this,_key,null,null,arguments))
+            if(_set(this,_key,null,null,arguments,this._stopChange))
             {
               _action = _descVal.apply(this,arguments);
             }
@@ -343,15 +343,19 @@ define([],function(){
               _value;
           return {
             get:function(){return _value;},
-            set:function styleSet(v,stopChange)
+            set:function styleSet(v)
             {
               _oldValue = _value;
-              if(_set(_el,_key,v,_oldValue,undefined,stopChange))
+              if(_set(_el,_key,v,_oldValue,undefined,this._stopChange))
               {
                 _value = v;
                 _proto.setProperty(_keyCP,v);
               }
-              if(!stopChange) _update(_el,_key,v,_oldValue);
+              if(!this._stopChange)
+              {
+                _update(_el,_key,v,_oldValue);
+              }
+              this._stopChange = undefined;
             },
             enumerable:true,
             configurable:true
@@ -1042,6 +1046,7 @@ define([],function(){
             _proto.addChildAttrListener = addChildAttrListener;
             _proto.addChildAttrUpdateListener = addChildAttrUpdateListener;
             _proto.hasListener = hasListener;
+            _proto.stopChange = stopChange;
           }
 
           if(_injectedObj === undefined)
