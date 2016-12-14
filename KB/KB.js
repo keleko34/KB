@@ -788,6 +788,29 @@ define([],function(){
             return has;
           }
 
+          function copyListeners(listeners,copyTo)
+          {
+            var listenerProps = Object.keys(listeners),
+                _currProp,
+                _currListener;
+            for(var x=0,len=listenerProps.length;x<len;x++)
+            {
+              _currProp = listenerProps[x];
+              if(copyTo[_currProp] === undefined)
+              {
+                copyTo[_currProp] = listeners[_currProp].slice();
+              }
+              else
+              {
+                for(var i=0,lenI=listeners[_currProp].length;i<lenI;i++)
+                {
+                  _currListener = listeners[_currProp][i];
+                  copyTo[_currProp].push(_currListener);
+                }
+              }
+            }
+          }
+
           function reSync(e)
           {
             if(e.target.nodeType !== 3 && e.target.nodeType !== 8)
@@ -864,10 +887,11 @@ define([],function(){
                     }
                   }
                   _listeners = nodes[x].attrListeners();
-                  _listeners._parentAttrListeners = _parentAttr;
-                  _listeners._parentAttrUpdateListeners = _parentAttrUpdate;
-                  _listeners._parentStyleListeners = _parentStyle;
-                  _listeners._parentStyleUpdateListeners = _parentStyleUpdate;
+
+                  copyListeners(_parentAttr,_listeners._parentAttrListeners);
+                  copyListeners(_parentAttrUpdate,_listeners._parentAttrUpdateListeners);
+                  copyListeners(_parentStyle,_listeners._parentStyleListeners);
+                  copyListeners(_parentStyleUpdate,_listeners._parentStyleUpdateListeners);
                 }
 
               if(outer !== undefined)
