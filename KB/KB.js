@@ -1177,7 +1177,7 @@ define([],function(){
           {
             addListener.call(this,attr,func,child,false);
           }
-          return bind;
+          return this;
         }
 
         bind.addAttrUpdateListener = function(attr,func,child)
@@ -1200,7 +1200,7 @@ define([],function(){
           {
             addListener.call(this,attr,func,child,true);
           }
-          return bind;
+          return this;
         }
 
         bind.removeAttrListener = function(attr,func,child)
@@ -1223,7 +1223,7 @@ define([],function(){
           {
             removeListener.call(this,attr,func,child,false);
           }
-          return bind;
+          return this;
         }
 
         bind.removeAttrUpdateListener = function(attr,func,child)
@@ -1246,7 +1246,7 @@ define([],function(){
           {
             removeListener.call(this,attr,func,child,true);
           }
-          return bind;
+          return this;
         }
 
         bind.hasListener = function(listener,attr,func)
