@@ -1069,6 +1069,10 @@ define([],function(){
             _proto.addAttrUpdateListener = bind.addAttrUpdateListener;
             _proto.addChildAttrListener = addChildAttrListener;
             _proto.addChildAttrUpdateListener = addChildAttrUpdateListener;
+            _proto.removeAttrListener = bind.removeAttrListener;
+            _proto.removeAttrUpdateListener = bind.removeAttrUpdateListener;
+            _proto.removeChildAttrListener = removeChildAttrListener;
+            _proto.removeChildAttrUpdateListener = removeChildAttrUpdateListener;
             _proto.hasListener = hasListener;
             _proto.stopChange = stopChange;
           }
