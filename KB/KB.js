@@ -1132,7 +1132,7 @@ define([],function(){
                 }
                 else
                 {
-                  _injectedObj.update(this,'value',this.checked,oldValue);
+                  _injectedObj.update(this,'value',this.value,oldValue);
                 }
               }).bind(this),0);
 
