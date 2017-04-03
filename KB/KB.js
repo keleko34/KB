@@ -22,7 +22,7 @@ define([],function(){
             _texts = ['textContent','innerHTML','innerText','outerHTML','outerText','appendChild','removeChild','replaceChild','insertAdjacentHTML','insertBefore'],
 
             /* A master list of all style prop names */
-            _allStyles = Object.getOwnPropertyNames(document.body.style),
+            _allStyles = Object.getOwnPropertyNames(document.documentElement.style),
 
             _allEvents = Object.keys(HTMLElement.prototype).filter(function(v){return (v.indexOf('on') === 0);}).concat(['addEventListener','removeEventListener']),
 
