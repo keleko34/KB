@@ -1124,8 +1124,9 @@ define([],function(){
                     _injectedObj.update(this,'checked',this.checked,oldValue);
                   }
                 }
-                this.value = value;
-
+                
+                if(this.value !== value) this.value = value;
+                  
                 if(!_injectedObj.set(this,'value',this.value,oldValue))
                 {
                   _descriptors['value'].set.call(this,oldValue);
