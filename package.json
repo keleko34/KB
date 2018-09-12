@@ -31,9 +31,7 @@
   "bugs": {
     "url": "https://github.com/keleko34/KB/issues"
   },
-  "devDependencies": {
-    "K_Tasks": "^0.6.4"
-  },
+  "devDependencies": {},
   "scripts": {
     "build": "gulp build"
   },
