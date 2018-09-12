@@ -2,12 +2,12 @@
 > This package has been deprecated as a newer more enhanced version has been created.
 You can find the new version at: [GITHUB](https://github.com/keleko34/pikantny) or [NPM](https://www.npmjs.com/package/pikantny)
 This newer version comes with many enhancements such as:
-Faster listeners
-Direct element `addEventListener` use for listeners
-IME (Multi lingual keyboard support/East Asian keyboards)
-More simple api interface
-Automatic loading of script, no more constructor
-3rd party library support (JQuery, D3, etc)
+Faster listeners,
+Direct element `addEventListener` use for listeners,
+IME (Multi lingual keyboard support/East Asian keyboards),
+More simple api interface,
+Automatic loading of script, no more constructor,
+3rd party library support (JQuery, D3, etc),
 Unit tests
 
 # KB
