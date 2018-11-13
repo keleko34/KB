@@ -10,6 +10,8 @@ Automatic loading of script, no more constructor,
 3rd party library support (JQuery, D3, etc),
 Unit tests
 
+**Note: in the case of using the Konnekt Library ignore this warning a newer version of Konnekt is in the works and the new library will be included with it.
+
 # KB
 DOM Attr/Property Binding Library - A library for Prototype Binding and Events!
 
